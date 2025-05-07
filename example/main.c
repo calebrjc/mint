@@ -6,11 +6,6 @@
 
 #define ARRAYSIZE(a) (sizeof(a) / sizeof(a[0]))
 
-void mint_hook_write(const char *str, size_t size)
-{
-    printf("CUSTOM: %.*s", (int)size, str);
-}
-
 void mint_hook_on_assert_failed(void)
 {
     printf("Do this instead!\n");
@@ -21,12 +16,14 @@ int main(int argc, char **argv)
 {
     int x = 5;
 
-    MINT_LOG("Value of `x`: %d", x);
+    mint_set_level(MINT_ID_GLOBAL, MINT_LEVEL_WARN);
+
+    MINT_LOGN("Value of `x`: %d", x);
     MINT_LOG_IF(x == 0, "Value of `x` is zero");
 
     uint16_t values[] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20};
-    MINT_LOG("Values size: %zu", ARRAYSIZE(values));
-    MINT_LOG_HEX("Values", values, sizeof(values));
+    MINT_LOGI("Values size: %zu", ARRAYSIZE(values));
+    MINT_LOGW_HEX("Values", values, sizeof(values));
 
     if (x == 5)
     {

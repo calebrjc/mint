@@ -38,3 +38,9 @@ tasks:
     cmds:
       - rm -rf build-dev
       - rm -rf build
+
+  run-example:
+    silent: true
+    cmds:
+      - task: build-dev
+      - ./build-dev/example/mintex
