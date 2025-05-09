@@ -1,0 +1,42 @@
+# https://taskfile.dev
+
+version: '3'
+
+tasks:
+  default:
+    cmds:
+      - task: build
+
+  configure:
+    silent: true
+    cmds:
+      - cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+
+  configure-dev:
+    silent: true
+    cmds:
+      - cmake -S . -B build-dev -DCMAKE_BUILD_TYPE=Debug -DMINT_DEV=ON
+
+  build:
+    silent: true
+    cmds:
+      - task: configure
+      - cmake --build build
+
+  build-dev:
+    silent: true
+    cmds:
+      - task: configure-dev
+      - cmake --build build-dev
+
+  clean:
+    silent: true
+    cmds:
+      - rm -rf build-dev
+      - rm -rf build
+
+  run-example:
+    silent: true
+    cmds:
+      - task: build-dev
+      - ./build-dev/example/mintex
