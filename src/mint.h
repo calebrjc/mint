@@ -60,10 +60,14 @@ __MINT_WEAK void mint_hook_on_assert_failed(void);
 
 /// @brief Hook for entering a critical section to allow the user to implement a mutual exclusion
 ///        mechanism for log output. Called before log output. Defaults to a no-op.
+/// @note By default, mint does not provide thread safety. `mint_hook_lock()` and `mint_hook_unlock`
+///       MUST be implemented by the user in order to implement thread safety.
 __MINT_WEAK void mint_hook_lock(void);
 
 /// @brief Hook for leaving a critical section to allow the user to implement a mutual exclusion
 ///        mechanism for log output. Called after log output. Defaults to a no-op.
+/// @note By default, mint does not provide thread safety. `mint_hook_lock()` and `mint_hook_unlock`
+///       MUST be implemented by the user in order to implement thread safety.
 __MINT_WEAK void mint_hook_unlock(void);
 
 // Public API --------------------------------------------------------------------------------------

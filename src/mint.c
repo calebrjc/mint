@@ -6,7 +6,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#define __MINT_MIN(__x, __y)    ((__x) < (__y)) ? (__x) : (__y)
+#define __MINT_MIN(__x, __y)    (((__x) < (__y)) ? (__x) : (__y))
 #define __MINT_UNUSED(x)        (void)(x)
 
 // NOTE(Caleb): Hex dump format example:
@@ -247,7 +247,7 @@ void __mint_log_hex_impl(
 
     for (size_t i = 0; i < size; i += 16)
     {
-        int line_size  = line_header_size + __MINT_LOG_HEX_LINE_LEN + 1;
+        int line_size  = __MINT_MIN(line_header_size + __MINT_LOG_HEX_LINE_LEN + 1, MINT_LOG_BUFFER_SIZE);
         int render_idx = line_header_size;
 
         memcpy(S_LOG_MESSAGE_BUFFER, line_header, line_header_size);
