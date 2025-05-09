@@ -4,12 +4,12 @@
 
 #include "mint.h"
 
-#define ARRAYSIZE(a) (sizeof(a) / sizeof(a[0]))
+#define ARRAYSIZE(a) (sizeof(a) / sizeof((a)[0]))
 
 void mint_hook_on_assert_failed(void)
 {
-    printf("Do this instead!\n");
-    exit(0);
+    printf("Custom exit handler!\n");
+    exit(EXIT_FAILURE);
 }
 
 int main(int argc, char **argv)
@@ -27,7 +27,7 @@ int main(int argc, char **argv)
 
     if (x == 5)
     {
-        MINT_CRASH("[CRASH] Unexpected value of `x`: %d", x);
+        MINT_CRASH("Unexpected value of `x`: %d", x);
     }
 
     return 0;

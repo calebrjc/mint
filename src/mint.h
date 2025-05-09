@@ -1,6 +1,7 @@
 #pragma once
 
 #include <stddef.h>
+#include <stdint.h>
 
 #ifdef __GNUC__
 #define __MINT_WEAK                 __attribute__((weak))
@@ -42,7 +43,7 @@
 ///
 /// NOTE: For LOG*_HEX macros, logs are written line by line, so the buffer should be large enough
 /// to hold at least a line of hexdump output if used (this depends on the API level).
-#define MINT_LOG_BUFFER_SIZE     128
+#define MINT_LOG_BUFFER_SIZE     256
 
 /// Enable or disable colored output. Only affects MINT_API_LEVEL_SIMPLE and above.
 #define MINT_ENABLE_COLORS       1
@@ -57,13 +58,22 @@ __MINT_WEAK void mint_hook_write(const char *str, size_t size);
 /// @brief Hook for when an assertion fails. Defaults to spinning forever.
 __MINT_WEAK void mint_hook_on_assert_failed(void);
 
+/// @brief Hook for entering a critical section to allow the user to implement a mutual exclusion
+///        mechanism for log output. Called before log output. Defaults to a no-op.
+__MINT_WEAK void mint_hook_lock(void);
+
+/// @brief Hook for leaving a critical section to allow the user to implement a mutual exclusion
+///        mechanism for log output. Called after log output. Defaults to a no-op.
+__MINT_WEAK void mint_hook_unlock(void);
+
 // Public API --------------------------------------------------------------------------------------
 
 #if MINT_API_LEVEL == MINT_API_LEVEL_ADVANCED
 #error "MINT_API_LEVEL_ADVANCED is not implemented yet"
 #endif
 
-typedef int mint_id_t;
+/// @brief The type of a logging ID. Allows for at the most 32 logging IDs.
+typedef uint32_t mint_id_t;
 #define MINT_ID_GLOBAL ((mint_id_t) - 1)
 
 typedef enum
@@ -89,7 +99,10 @@ void mint_set_level(mint_id_t id, mint_level_e level);
 // LOG -------------------------------------------------------------------------
 
 #define __MINT_LOG_IMPL(__level, __fmt, ...)                                                       \
-    __mint_log_impl((__level), 0, (__FILE__), (__LINE__), (__fmt), ##__VA_ARGS__);
+    do                                                                                             \
+    {                                                                                              \
+        __mint_log_impl((__level), 0, (__FILE__), (__LINE__), (__fmt), ##__VA_ARGS__);             \
+    } while (0)
 
 /// @brief Log a formatted message to the console.
 /// @param[in] __fmt The printf-style format string for the message.
@@ -111,7 +124,7 @@ void mint_set_level(mint_id_t id, mint_level_e level);
 #define __MINT_LOG_IF_IMPL(__level, __cond, __fmt, ...)                                            \
     do                                                                                             \
     {                                                                                              \
-        if (!!(__cond))                                                                            \
+        if (__cond)                                                                                \
         {                                                                                          \
             __MINT_LOG_IMPL((__level), (__fmt), ##__VA_ARGS__);                                    \
         }                                                                                          \
@@ -175,10 +188,20 @@ void mint_set_level(mint_id_t id, mint_level_e level);
 #define __MINT_RETURN_LOG_IF_IMPL(__level, __cond, __retval, __fmt, ...)                           \
     do                                                                                             \
     {                                                                                              \
-        if (!!(__cond))                                                                            \
+        if (__cond)                                                                                \
         {                                                                                          \
             __MINT_LOG_IMPL((__level), (__fmt), ##__VA_ARGS__);                                    \
             return __retval;                                                                       \
+        }                                                                                          \
+    } while (0)
+
+#define __MINT_RETURN_VOID_LOG_IF_IMPL(__level, __cond, __fmt, ...)                                \
+    do                                                                                             \
+    {                                                                                              \
+        if (__cond)                                                                                \
+        {                                                                                          \
+            __MINT_LOG_IMPL((__level), (__fmt), ##__VA_ARGS__);                                    \
+            return;                                                                                \
         }                                                                                          \
     } while (0)
 
@@ -189,6 +212,9 @@ void mint_set_level(mint_id_t id, mint_level_e level);
 /// @param[in] ... The arguments for the format string.
 #define MINT_RETURN_LOG_IF(__cond, __retval, __fmt, ...)                                           \
     __MINT_RETURN_LOG_IF_IMPL(MINT_LEVEL_ALWAYS, (__cond), (__retval), (__fmt), ##__VA_ARGS__)
+
+#define MINT_RETURN_VOID_LOG_IF(__cond, __fmt, ...)                                                \
+    __MINT_RETURN_VOID_LOG_IF_IMPL(MINT_LEVEL_ALWAYS, (__cond), (__fmt), ##__VA_ARGS__)
 
 #if MINT_API_LEVEL == MINT_API_LEVEL_SIMPLE
 #define MINT_RETURN_LOGN_IF(__cond, __retval, __fmt, ...)                                          \
@@ -205,6 +231,21 @@ void mint_set_level(mint_id_t id, mint_level_e level);
     __MINT_RETURN_LOG_IF_IMPL(MINT_LEVEL_DEBUG, (__cond), (__retval), (__fmt), ##__VA_ARGS__)
 #define MINT_RETURN_LOGT_IF(__cond, __retval, __fmt, ...)                                          \
     __MINT_RETURN_LOG_IF_IMPL(MINT_LEVEL_TRACE, (__cond), (__retval), (__fmt), ##__VA_ARGS__)
+
+#define MINT_RETURN_VOID_LOGN_IF(__cond, __fmt, ...)                                               \
+    __MINT_RETURN_VOID_LOG_IF_IMPL(MINT_LEVEL_NOTIFY, (__cond), (__fmt), ##__VA_ARGS__)
+#define MINT_RETURN_VOID_LOGF_IF(__cond, __fmt, ...)                                               \
+    __MINT_RETURN_VOID_LOG_IF_IMPL(MINT_LEVEL_FATAL, (__cond), (__fmt), ##__VA_ARGS__)
+#define MINT_RETURN_VOID_LOGE_IF(__cond, __fmt, ...)                                               \
+    __MINT_RETURN_VOID_LOG_IF_IMPL(MINT_LEVEL_ERROR, (__cond), (__fmt), ##__VA_ARGS__)
+#define MINT_RETURN_VOID_LOGW_IF(__cond, __fmt, ...)                                               \
+    __MINT_RETURN_VOID_LOG_IF_IMPL(MINT_LEVEL_WARN, (__cond), (__fmt), ##__VA_ARGS__)
+#define MINT_RETURN_VOID_LOGI_IF(__cond, __fmt, ...)                                               \
+    __MINT_RETURN_VOID_LOG_IF_IMPL(MINT_LEVEL_INFO, (__cond), (__fmt), ##__VA_ARGS__)
+#define MINT_RETURN_VOID_LOGD_IF(__cond, __fmt, ...)                                               \
+    __MINT_RETURN_VOID_LOG_IF_IMPL(MINT_LEVEL_DEBUG, (__cond), (__fmt), ##__VA_ARGS__)
+#define MINT_RETURN_VOID_LOGT_IF(__cond, __fmt, ...)                                               \
+    __MINT_RETURN_VOID_LOG_IF_IMPL(MINT_LEVEL_TRACE, (__cond), (__fmt), ##__VA_ARGS__)
 #endif
 
 // Checks, Asserts, and Returns ------------------------------------------------
@@ -245,9 +286,18 @@ void mint_set_level(mint_id_t id, mint_level_e level);
 #define MINT_RETURN_IF(__cond, ...)                                                                \
     do                                                                                             \
     {                                                                                              \
-        if (!!(__cond))                                                                            \
+        if (__cond)                                                                                \
         {                                                                                          \
             return __VA_ARGS__;                                                                    \
+        }                                                                                          \
+    } while (0)
+
+#define MINT_RETURN_VOID_IF(__cond)                                                                \
+    do                                                                                             \
+    {                                                                                              \
+        if (__cond)                                                                                \
+        {                                                                                          \
+            return;                                                                                \
         }                                                                                          \
     } while (0)
 

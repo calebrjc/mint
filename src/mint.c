@@ -6,6 +6,9 @@
 #include <stdio.h>
 #include <string.h>
 
+#define __MINT_MIN(__x, __y)    ((__x) < (__y)) ? (__x) : (__y)
+#define __MINT_UNUSED(x)        (void)(x)
+
 // NOTE(Caleb): Hex dump format example:
 // 0x0000  23 20 42 75 69 6c 64 20  2d 2d 2d 2d 2d 2d 2d 2d  |# Build --------|
 #define __MINT_LOG_HEX_LINE_LEN 76
@@ -31,6 +34,9 @@
 /// @brief Return the basename of a given path.
 static char *__mint_basename(char *filename);
 
+/// @brief Return true if a log message should be output, and false otherwise.
+/// @note For MINT_API_LEVEL_BAREBONES, this is always true.
+/// @note For MINT_API_LEVEL_SIMPLE, this only takes the level into account.
 static bool __mint_should_log(mint_level_e level, mint_id_t id);
 
 // Static Variables --------------------------------------------------------------------------------
@@ -61,10 +67,23 @@ __MINT_WEAK void mint_hook_write(const char *str, size_t size)
 
 __MINT_WEAK void mint_hook_on_assert_failed(void)
 {
+    // NOTE(Caleb): This library is generally made for the benefit of embedded systems, so
+    // the default exit handler is to spin forever since we don't have access to exit() or abort().
+
     while (1)
     {
         // Spin forever...
     }
+}
+
+__MINT_WEAK void mint_hook_lock(void)
+{
+    // No-op
+}
+
+__MINT_WEAK void mint_hook_unlock(void)
+{
+    // No-op
 }
 
 // API Implementation ------------------------------------------------------------------------------
@@ -87,7 +106,7 @@ void mint_set_level(mint_id_t id, mint_level_e level)
 void __mint_log_impl(
     mint_level_e level, mint_id_t id, char *file, int line, const char *format, ...)
 {
-    MINT_RETURN_IF(!__mint_should_log(level, id));
+    MINT_RETURN_VOID_IF(!__mint_should_log(level, id));
 
     file = __mint_basename(file);
 
@@ -96,7 +115,7 @@ void __mint_log_impl(
 
     const char *log_format_format = "%s:%d | %s\n";
     int         log_format_size   = snprintf(NULL, 0, log_format_format, file, line, format);
-    MINT_RETURN_IF(log_format_size < 0);
+    MINT_RETURN_VOID_IF(log_format_size < 0);
 
     char log_format[log_format_size + 1];
     (void)snprintf(log_format, log_format_size + 1, log_format_format, file, line, format);
@@ -104,7 +123,7 @@ void __mint_log_impl(
     const char *log_format_format = "%s | %s:%d | %s\n%s";
     int         log_format_size   = snprintf(
         NULL, 0, log_format_format, S_LEVEL_STRINGS[level], file, line, format, __MINT_COLOR_RESET);
-    MINT_RETURN_IF(log_format_size < 0);
+    MINT_RETURN_VOID_IF(log_format_size < 0);
 
     char log_format[log_format_size + 1];
     (void)snprintf(
@@ -120,6 +139,8 @@ void __mint_log_impl(
 // ...
 #endif
 
+    mint_hook_lock();
+
     va_list args;
     va_start(args, format);
 
@@ -127,8 +148,16 @@ void __mint_log_impl(
 
     va_end(args);
 
-    MINT_RETURN_IF(log_message_size < 0);
+    if (log_message_size < 0)
+    {
+        mint_hook_unlock();
+        return;
+    }
+
+    log_message_size = __MINT_MIN(log_message_size, MINT_LOG_BUFFER_SIZE - 1);
     mint_hook_write(S_LOG_MESSAGE_BUFFER, log_message_size);
+
+    mint_hook_unlock();
 }
 
 void __mint_log_hex_impl(
@@ -140,7 +169,7 @@ void __mint_log_hex_impl(
     const void  *data,
     size_t       size)
 {
-    MINT_RETURN_IF(!__mint_should_log(level, id));
+    MINT_RETURN_VOID_IF(!__mint_should_log(level, id));
 
     file = __mint_basename(file);
 
@@ -175,7 +204,8 @@ void __mint_log_hex_impl(
     // ...
 #endif
 
-    MINT_RETURN_IF(line_header_size < 0);
+    // TODO(Caleb): Reconsider how to implement this without VLAs to have support for MSVC and C23
+    MINT_RETURN_VOID_IF(line_header_size < 0);
     char line_header[line_header_size + 1];
 
 #if MINT_API_LEVEL == MINT_API_LEVEL_BAREBONES
@@ -212,6 +242,8 @@ void __mint_log_hex_impl(
 #else // MINT_API_LEVEL == MINT_API_LEVEL_ADVANCED
     // ...
 #endif
+
+    mint_hook_lock();
 
     for (size_t i = 0; i < size; i += 16)
     {
@@ -274,19 +306,28 @@ void __mint_log_hex_impl(
 
         mint_hook_write(S_LOG_MESSAGE_BUFFER, render_idx);
     }
+
+    mint_hook_unlock();
 }
 
 // Private Helper Implementation -------------------------------------------------------------------
 
 static char *__mint_basename(char *filename)
 {
-    char *basename = strrchr(filename, '/');
+    char *fslash = strrchr(filename, '/');
+    char *bslash = strrchr(filename, '\\');
+
+    char *basename = (fslash > bslash) ? fslash : bslash;
     return basename ? basename + 1 : filename;
 }
 
 static bool __mint_should_log(mint_level_e level, mint_id_t id)
 {
-#if MINT_API_LEVEL == MINT_API_LEVEL_SIMPLE
+#if MINT_API_LEVEL == MINT_API_LEVEL_BAREBONES
+    __MINT_UNUSED(level);
+    __MINT_UNUSED(id);
+#elif MINT_API_LEVEL == MINT_API_LEVEL_SIMPLE
+    __MINT_UNUSED(id);
     MINT_RETURN_IF(level > s_global_level, false);
 #endif
 
