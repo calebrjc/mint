@@ -10,8 +10,8 @@
 #define __MINT_UNUSED(x)        (void)(x)
 
 // NOTE(Caleb): Hex dump format example:
-// 0x0000  23 20 42 75 69 6c 64 20  2d 2d 2d 2d 2d 2d 2d 2d  |# Build --------|
-#define __MINT_LOG_HEX_LINE_LEN 76
+// 0x00000000  23 20 42 75 69 6c 64 20  2d 2d 2d 2d 2d 2d 2d 2d  |# Build --------|
+#define __MINT_LOG_HEX_LINE_LEN 80
 
 #if MINT_ENABLE_COLORS
 #define __MINT_COLOR_RESET   "\033[39m"
@@ -247,15 +247,17 @@ void __mint_log_hex_impl(
 
     for (size_t i = 0; i < size; i += 16)
     {
-        int line_size  = __MINT_MIN(line_header_size + __MINT_LOG_HEX_LINE_LEN + 1, MINT_LOG_BUFFER_SIZE);
+        int line_size  = line_header_size + __MINT_LOG_HEX_LINE_LEN + 1;
         int render_idx = line_header_size;
+
+        MINT_RETURN_VOID_IF(line_size >= MINT_LOG_BUFFER_SIZE);
 
         memcpy(S_LOG_MESSAGE_BUFFER, line_header, line_header_size);
 
         // Line header + address ---------------------------
 
         render_idx += snprintf(
-            S_LOG_MESSAGE_BUFFER + render_idx, line_size - render_idx, "0x%04X  ", (unsigned int)i);
+            S_LOG_MESSAGE_BUFFER + render_idx, line_size - render_idx, "0x%08zX  ", i);
 
         // Hex bytes ---------------------------------------
 
@@ -304,7 +306,7 @@ void __mint_log_hex_impl(
         render_idx += snprintf(
             S_LOG_MESSAGE_BUFFER + render_idx, line_size - render_idx, "|\n%s", __MINT_COLOR_RESET);
 
-        mint_hook_write(S_LOG_MESSAGE_BUFFER, render_idx);
+        mint_hook_write(S_LOG_MESSAGE_BUFFER, __MINT_MIN(render_idx, MINT_LOG_BUFFER_SIZE - 1));
     }
 
     mint_hook_unlock();
