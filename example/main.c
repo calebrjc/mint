@@ -1,6 +1,7 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <time.h>
 
 #include "mint.h"
 
@@ -10,6 +11,14 @@ void mint_hook_on_assert_failed(void)
 {
     printf("Custom exit handler!\n");
     exit(EXIT_FAILURE);
+}
+
+uint32_t mint_hook_get_uptime(void)
+{
+    struct timespec ts;
+    clock_gettime(CLOCK_MONOTONIC, &ts);
+
+    return ts.tv_sec * 1000 + ts.tv_nsec / 1000000;
 }
 
 int main(int argc, char **argv)

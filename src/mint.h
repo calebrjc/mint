@@ -48,6 +48,10 @@
 /// Enable or disable colored output. Only affects MINT_API_LEVEL_SIMPLE and above.
 #define MINT_ENABLE_COLORS       1
 
+/// Enable or disable having the current system uptime prepended to each log message.
+/// Setting this to 1 requires the user to implement `mint_hook_get_uptime()` to see the uptime.
+#define MINT_ENABLE_UPTIME       1
+
 // Hooks -------------------------------------------------------------------------------------------
 
 /// @brief Hook for writing to the console. Defaults to using `printf`.
@@ -69,6 +73,9 @@ __MINT_WEAK void mint_hook_lock(void);
 /// @note By default, mint does not provide thread safety. `mint_hook_lock()` and `mint_hook_unlock`
 ///       MUST be implemented by the user in order to implement thread safety.
 __MINT_WEAK void mint_hook_unlock(void);
+
+/// @brief Hook for getting the current system uptime in milliseconds.
+__MINT_WEAK uint32_t mint_hook_get_uptime(void);
 
 // Public API --------------------------------------------------------------------------------------
 
@@ -105,7 +112,7 @@ void mint_set_level(mint_id_t id, mint_level_e level);
 #define __MINT_LOG_IMPL(__level, __fmt, ...)                                                       \
     do                                                                                             \
     {                                                                                              \
-        __mint_log_impl((__level), 0, (__FILE__), (__LINE__), (__fmt), ##__VA_ARGS__);             \
+        __mint_log_impl(0, (__level), (__FILE__), (__LINE__), (__fmt), ##__VA_ARGS__);             \
     } while (0)
 
 /// @brief Log a formatted message to the console.
@@ -161,7 +168,7 @@ void mint_set_level(mint_id_t id, mint_level_e level);
 // LOG_HEX ---------------------------------------------------------------------
 
 #define __MINT_LOG_HEX_IMPL(__level, __header, __data, __size)                                     \
-    __mint_log_hex_impl((__level), 0, (__FILE__), (__LINE__), (__header), (__data), (__size));
+    __mint_log_hex_impl(0, (__level), (__FILE__), (__LINE__), (__header), (__data), (__size));
 
 /// @brief Log a hex dump to the console.
 /// @param[in] __header The header to print before the hex dump.
@@ -318,12 +325,12 @@ void mint_set_level(mint_id_t id, mint_level_e level);
 // Implementation Details --------------------------------------------------------------------------
 
 void __mint_log_impl(
-    mint_level_e level, mint_id_t id, char *file, int line, const char *format, ...)
+    mint_id_t id, mint_level_e level, char *file, int line, const char *format, ...)
     __MINT_PRINTFLIKE(5, 6);
 
 void __mint_log_hex_impl(
-    mint_level_e level,
     mint_id_t    id,
+    mint_level_e level,
     char        *file,
     int          line,
     const char  *header,
