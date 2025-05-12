@@ -13,9 +13,9 @@
 // 0x00000000  23 20 42 75 69 6c 64 20  2d 2d 2d 2d 2d 2d 2d 2d  |# Build --------|
 #define __MINT_LOG_HEX_LINE_LEN 80
 
-#if MINT_ENABLE_UPTIME
-#define __MINT_UPTIME_FORMAT  "[%02d:%02d:%02d,%03d]"
-#define __MINT_UPTIME_STR_LEN 17
+#if MINT_ENABLE_TIME
+#define __MINT_TIME_FORMAT  "[%02d:%02d:%02d,%03d]"
+#define __MINT_TIME_STR_LEN (sizeof("[00:00:00,000]") - 1)
 #endif
 
 #if MINT_ENABLE_COLORS
@@ -44,9 +44,9 @@ static char *__mint_basename(char *filename);
 /// @note For MINT_API_LEVEL_SIMPLE, this only takes the level into account.
 static bool __mint_should_log(mint_level_e level, mint_id_t id);
 
-#if MINT_ENABLE_UPTIME
-/// @brief Format the uptime as a string into the given buffer.
-static void __mint_format_uptime(uint32_t uptime, char *o_data, size_t size);
+#if MINT_ENABLE_TIME
+/// @brief Format the system time as a string into the given buffer.
+static void __mint_format_time(mint_time_t time, char *o_data, size_t size);
 #endif
 
 // Static Variables --------------------------------------------------------------------------------
@@ -54,7 +54,7 @@ static void __mint_format_uptime(uint32_t uptime, char *o_data, size_t size);
 static char S_LOG_MESSAGE_BUFFER[MINT_LOG_BUFFER_SIZE] = {0};
 
 #if MINT_API_LEVEL >= MINT_API_LEVEL_SIMPLE
-static const char *S_LEVEL_STRINGS[] = {
+static const char *const S_LEVEL_STRINGS[] = {
     [MINT_LEVEL_ALWAYS] = "ALW",
     [MINT_LEVEL_NOTIFY] = "NTF",
     [MINT_LEVEL_FATAL]  = "FAT",
@@ -65,7 +65,7 @@ static const char *S_LEVEL_STRINGS[] = {
     [MINT_LEVEL_TRACE]  = "TRC",
 };
 
-static const char *S_LEVEL_COLORS[] = {
+static const char *const S_LEVEL_COLORS[] = {
     [MINT_LEVEL_ALWAYS] = __MINT_COLOR_RESET,
     [MINT_LEVEL_NOTIFY] = __MINT_COLOR_MAGENTA,
     [MINT_LEVEL_FATAL]  = __MINT_COLOR_RED,
@@ -109,7 +109,7 @@ __MINT_WEAK void mint_hook_unlock(void)
     // No-op
 }
 
-__MINT_WEAK uint32_t mint_hook_get_uptime(void)
+__MINT_WEAK uint32_t mint_hook_get_time(void)
 {
     return 0;
 }
@@ -117,12 +117,6 @@ __MINT_WEAK uint32_t mint_hook_get_uptime(void)
 // API Implementation ------------------------------------------------------------------------------
 
 #if MINT_API_LEVEL == MINT_API_LEVEL_BAREBONES
-void mint_set_level(mint_id_t id, mint_level_e level)
-{
-    __MINT_UNUSED(id);
-    __MINT_UNUSED(level);
-}
-
 void __mint_log_impl(
     mint_id_t id, mint_level_e level, char *file, int line, const char *format, ...)
 {
@@ -133,17 +127,17 @@ void __mint_log_impl(
 
     file = __mint_basename(file);
 
-#if MINT_ENABLE_UPTIME
-    static char uptime_str[__MINT_UPTIME_STR_LEN + 1] = {0};
-    __mint_format_uptime(mint_hook_get_uptime(), uptime_str, __MINT_UPTIME_STR_LEN + 1);
+#if MINT_ENABLE_TIME
+    static char time_str[__MINT_TIME_STR_LEN + 1] = {0};
+    __mint_format_time(mint_hook_get_time(), time_str, __MINT_TIME_STR_LEN + 1);
 
     const char *log_format_format = "%s %s:%d | %s\n";
-    int log_format_size = snprintf(NULL, 0, log_format_format, uptime_str, file, line, format);
+    int log_format_size = snprintf(NULL, 0, log_format_format, time_str, file, line, format);
     MINT_RETURN_VOID_IF(log_format_size < 0);
 
     char log_format[log_format_size + 1];
     (void)snprintf(
-        log_format, log_format_size + 1, log_format_format, uptime_str, file, line, format);
+        log_format, log_format_size + 1, log_format_format, time_str, file, line, format);
 #else
     const char *log_format_format = "%s:%d | %s\n";
     int         log_format_size   = snprintf(NULL, 0, log_format_format, file, line, format);
@@ -193,18 +187,18 @@ void __mint_log_hex_impl(
     const char *line_header_format = NULL;
     int         line_header_size   = 0;
 
-#if MINT_ENABLE_UPTIME
-    static char uptime_str[__MINT_UPTIME_STR_LEN + 1] = {0};
-    __mint_format_uptime(mint_hook_get_uptime(), uptime_str, __MINT_UPTIME_STR_LEN + 1);
+#if MINT_ENABLE_TIME
+    static char time_str[__MINT_TIME_STR_LEN + 1] = {0};
+    __mint_format_time(mint_hook_get_time(), time_str, __MINT_TIME_STR_LEN + 1);
 
     line_header_format = (header) ? "%s %s:%d | %s | " : "%s %s:%d | ";
     if (header)
     {
-        line_header_size = snprintf(NULL, 0, line_header_format, uptime_str, file, line, header);
+        line_header_size = snprintf(NULL, 0, line_header_format, time_str, file, line, header);
     }
     else
     {
-        line_header_size = snprintf(NULL, 0, line_header_format, uptime_str, file, line);
+        line_header_size = snprintf(NULL, 0, line_header_format, time_str, file, line);
     }
 
     // TODO(Caleb): Reconsider how to implement this without VLAs to have support for MSVC and C23
@@ -214,11 +208,11 @@ void __mint_log_hex_impl(
     if (header)
     {
         snprintf(
-            line_header, line_header_size + 1, line_header_format, uptime_str, file, line, header);
+            line_header, line_header_size + 1, line_header_format, time_str, file, line, header);
     }
     else
     {
-        snprintf(line_header, line_header_size + 1, line_header_format, uptime_str, file, line);
+        snprintf(line_header, line_header_size + 1, line_header_format, time_str, file, line);
     }
 #else
     line_header_format = (header) ? "%s:%d | %s | " : "%s:%d | ";
@@ -332,9 +326,9 @@ void __mint_log_impl(
 
     file = __mint_basename(file);
 
-#if MINT_ENABLE_UPTIME
-    char uptime_str[__MINT_UPTIME_STR_LEN + 1];
-    __mint_format_uptime(mint_hook_get_uptime(), uptime_str, __MINT_UPTIME_STR_LEN + 1);
+#if MINT_ENABLE_TIME
+    char time_str[__MINT_TIME_STR_LEN + 1];
+    __mint_format_time(mint_hook_get_time(), time_str, __MINT_TIME_STR_LEN + 1);
 
     const char *log_format_format = "%s%s %s | %s:%d | %s%s\n";
     int         log_format_size   = snprintf(
@@ -342,7 +336,7 @@ void __mint_log_impl(
         0,
         log_format_format,
         S_LEVEL_COLORS[level],
-        uptime_str,
+        time_str,
         S_LEVEL_STRINGS[level],
         file,
         line,
@@ -356,7 +350,7 @@ void __mint_log_impl(
         log_format_size + 1,
         log_format_format,
         S_LEVEL_COLORS[level],
-        uptime_str,
+        time_str,
         S_LEVEL_STRINGS[level],
         file,
         line,
@@ -428,9 +422,9 @@ void __mint_log_hex_impl(
     const char *line_header_format = NULL;
     int         line_header_size   = 0;
 
-#if MINT_ENABLE_UPTIME
-    char uptime_str[__MINT_UPTIME_STR_LEN + 1];
-    __mint_format_uptime(mint_hook_get_uptime(), uptime_str, __MINT_UPTIME_STR_LEN + 1);
+#if MINT_ENABLE_TIME
+    char time_str[__MINT_TIME_STR_LEN + 1];
+    __mint_format_time(mint_hook_get_time(), time_str, __MINT_TIME_STR_LEN + 1);
 
     line_header_format = (header) ? "%s%s %s | %s:%d | %s | " : "%s %s | %s:%d | ";
     if (header)
@@ -440,7 +434,7 @@ void __mint_log_hex_impl(
             0,
             line_header_format,
             S_LEVEL_COLORS[level],
-            uptime_str,
+            time_str,
             S_LEVEL_STRINGS[level],
             file,
             line,
@@ -453,7 +447,7 @@ void __mint_log_hex_impl(
             0,
             line_header_format,
             S_LEVEL_COLORS[level],
-            uptime_str,
+            time_str,
             S_LEVEL_STRINGS[level],
             file,
             line);
@@ -470,7 +464,7 @@ void __mint_log_hex_impl(
             line_header_size + 1,
             line_header_format,
             S_LEVEL_COLORS[level],
-            uptime_str,
+            time_str,
             S_LEVEL_STRINGS[level],
             file,
             line,
@@ -483,7 +477,7 @@ void __mint_log_hex_impl(
             line_header_size + 1,
             line_header_format,
             S_LEVEL_COLORS[level],
-            uptime_str,
+            time_str,
             S_LEVEL_STRINGS[level],
             file,
             line);
@@ -634,16 +628,16 @@ static bool __mint_should_log(mint_level_e level, mint_id_t id)
     return true;
 }
 
-#if MINT_ENABLE_UPTIME
-static void __mint_format_uptime(uint32_t uptime, char *o_data, size_t size)
+#if MINT_ENABLE_TIME
+static void __mint_format_time(mint_time_t time, char *o_data, size_t size)
 {
-    uint32_t hours = uptime / (1000 * 60 * 60);
-    uptime -= hours * (1000 * 60 * 60);
-    uint32_t minutes = uptime / (1000 * 60);
-    uptime -= minutes * (1000 * 60);
-    uint32_t seconds = uptime / 1000;
-    uptime -= seconds * 1000;
+    uint32_t hours = time / (1000 * 60 * 60);
+    time -= hours * (1000 * 60 * 60);
+    uint32_t minutes = time / (1000 * 60);
+    time -= minutes * (1000 * 60);
+    uint32_t seconds = time / 1000;
+    time -= seconds * 1000;
 
-    snprintf(o_data, size, __MINT_UPTIME_FORMAT, hours, minutes, seconds, uptime);
+    snprintf(o_data, size, __MINT_TIME_FORMAT, hours, minutes, seconds, time);
 }
 #endif

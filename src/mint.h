@@ -34,7 +34,7 @@
 #define MINT_API_LEVEL_ADVANCED  2
 
 // Select the API level to use. See the descriptions above for details.
-#define MINT_API_LEVEL           MINT_API_LEVEL_SIMPLE
+#define MINT_API_LEVEL           MINT_API_LEVEL_BAREBONES
 
 // Other Configuration Parameters ----------------------------------------------
 
@@ -48,9 +48,12 @@
 /// Enable or disable colored output. Only affects MINT_API_LEVEL_SIMPLE and above.
 #define MINT_ENABLE_COLORS       1
 
-/// Enable or disable having the current system uptime prepended to each log message.
-/// Setting this to 1 requires the user to implement `mint_hook_get_uptime()` to see the uptime.
-#define MINT_ENABLE_UPTIME       1
+/// Enable or disable having the current system time prepended to each log message.
+/// Setting this to 1 requires the user to implement `mint_hook_get_time()` to see the time.
+#define MINT_ENABLE_TIME         1
+
+// Select the type of the time to be used. Must be an integer type.
+typedef uint32_t mint_time_t;
 
 // Hooks -------------------------------------------------------------------------------------------
 
@@ -74,16 +77,13 @@ __MINT_WEAK void mint_hook_lock(void);
 ///       MUST be implemented by the user in order to implement thread safety.
 __MINT_WEAK void mint_hook_unlock(void);
 
-/// @brief Hook for getting the current system uptime in milliseconds.
-__MINT_WEAK uint32_t mint_hook_get_uptime(void);
+/// @brief Hook for getting the current system time in milliseconds.
+__MINT_WEAK mint_time_t mint_hook_get_time(void);
 
 // Public API --------------------------------------------------------------------------------------
 
-#if MINT_API_LEVEL == MINT_API_LEVEL_ADVANCED
-#error "MINT_API_LEVEL_ADVANCED is not implemented yet"
-#endif
-
-/// @brief The type of a logging ID. Allows for at the most 32 logging IDs.
+/// @brief The type of a logging ID.
+/// @note An application may define at most 32 logging IDs.
 typedef uint32_t mint_id_t;
 #define MINT_ID_GLOBAL ((mint_id_t) - 1)
 
@@ -99,6 +99,7 @@ typedef enum
     MINT_LEVEL_TRACE,
 } mint_level_e;
 
+#if MINT_API_LEVEL >= MINT_API_LEVEL_SIMPLE
 /// @brief Set a logging level.
 /// @param id The ID to set the level for.
 /// @param level The level to set.
@@ -106,6 +107,19 @@ typedef enum
 /// @note For MINT_API_LEVEL_SIMPLE, this function sets the global level and should use
 ///       `MINT_ID_GLOBAL` for the `id` parameter.
 void mint_set_level(mint_id_t id, mint_level_e level);
+#else
+#define mint_set_level(id, level) ((void)0)
+#endif
+
+#if MINT_API_LEVEL == MINT_API_LEVEL_ADVANCED
+/// @brief Set the tag for a logging ID.
+/// @param id The ID to set the tag for.
+/// @param tag The tag to set.
+/// @note Tags may have a maximum length of 6 characters.
+void mint_set_tag(mint_id_t id, const char *tag);
+#else
+#define mint_set_tag(id, tag) ((void)0)
+#endif
 
 // LOG -------------------------------------------------------------------------
 
@@ -118,9 +132,8 @@ void mint_set_level(mint_id_t id, mint_level_e level);
 /// @brief Log a formatted message to the console.
 /// @param[in] __fmt The printf-style format string for the message.
 /// @param[in] ... The arguments for the format string.
-#define MINT_LOG(__fmt, ...) __MINT_LOG_IMPL(MINT_LEVEL_ALWAYS, (__fmt), ##__VA_ARGS__)
+#define MINT_LOG(__fmt, ...)  __MINT_LOG_IMPL(MINT_LEVEL_ALWAYS, (__fmt), ##__VA_ARGS__)
 
-#if MINT_API_LEVEL == MINT_API_LEVEL_SIMPLE
 #define MINT_LOGN(__fmt, ...) __MINT_LOG_IMPL(MINT_LEVEL_NOTIFY, (__fmt), ##__VA_ARGS__)
 #define MINT_LOGF(__fmt, ...) __MINT_LOG_IMPL(MINT_LEVEL_FATAL, (__fmt), ##__VA_ARGS__)
 #define MINT_LOGE(__fmt, ...) __MINT_LOG_IMPL(MINT_LEVEL_ERROR, (__fmt), ##__VA_ARGS__)
@@ -128,7 +141,6 @@ void mint_set_level(mint_id_t id, mint_level_e level);
 #define MINT_LOGI(__fmt, ...) __MINT_LOG_IMPL(MINT_LEVEL_INFO, (__fmt), ##__VA_ARGS__)
 #define MINT_LOGD(__fmt, ...) __MINT_LOG_IMPL(MINT_LEVEL_DEBUG, (__fmt), ##__VA_ARGS__)
 #define MINT_LOGT(__fmt, ...) __MINT_LOG_IMPL(MINT_LEVEL_TRACE, (__fmt), ##__VA_ARGS__)
-#endif
 
 // LOG_IF ----------------------------------------------------------------------
 
@@ -148,7 +160,6 @@ void mint_set_level(mint_id_t id, mint_level_e level);
 #define MINT_LOG_IF(__cond, __fmt, ...)                                                            \
     __MINT_LOG_IF_IMPL(MINT_LEVEL_ALWAYS, (__cond), (__fmt), ##__VA_ARGS__)
 
-#if MINT_API_LEVEL == MINT_API_LEVEL_SIMPLE
 #define MINT_LOGN_IF(__cond, __fmt, ...)                                                           \
     __MINT_LOG_IF_IMPL(MINT_LEVEL_NOTIFY, (__cond), (__fmt), ##__VA_ARGS__)
 #define MINT_LOGF_IF(__cond, __fmt, ...)                                                           \
@@ -163,7 +174,6 @@ void mint_set_level(mint_id_t id, mint_level_e level);
     __MINT_LOG_IF_IMPL(MINT_LEVEL_DEBUG, (__cond), (__fmt), ##__VA_ARGS__)
 #define MINT_LOGT_IF(__cond, __fmt, ...)                                                           \
     __MINT_LOG_IF_IMPL(MINT_LEVEL_TRACE, (__cond), (__fmt), ##__VA_ARGS__)
-#endif
 
 // LOG_HEX ---------------------------------------------------------------------
 
@@ -177,7 +187,6 @@ void mint_set_level(mint_id_t id, mint_level_e level);
 #define MINT_LOG_HEX(__header, __data, __size)                                                     \
     __MINT_LOG_HEX_IMPL(MINT_LEVEL_ALWAYS, (__header), (__data), (__size))
 
-#if MINT_API_LEVEL == MINT_API_LEVEL_SIMPLE
 #define MINT_LOGN_HEX(__header, __data, __size)                                                    \
     __MINT_LOG_HEX_IMPL(MINT_LEVEL_NOTIFY, (__header), (__data), (__size))
 #define MINT_LOGF_HEX(__header, __data, __size)                                                    \
@@ -192,7 +201,6 @@ void mint_set_level(mint_id_t id, mint_level_e level);
     __MINT_LOG_HEX_IMPL(MINT_LEVEL_DEBUG, (__header), (__data), (__size))
 #define MINT_LOGT_HEX(__header, __data, __size)                                                    \
     __MINT_LOG_HEX_IMPL(MINT_LEVEL_TRACE, (__header), (__data), (__size))
-#endif
 
 // RETURN_LOG_IF --------------------------------------------------------------
 
@@ -227,7 +235,6 @@ void mint_set_level(mint_id_t id, mint_level_e level);
 #define MINT_RETURN_VOID_LOG_IF(__cond, __fmt, ...)                                                \
     __MINT_RETURN_VOID_LOG_IF_IMPL(MINT_LEVEL_ALWAYS, (__cond), (__fmt), ##__VA_ARGS__)
 
-#if MINT_API_LEVEL == MINT_API_LEVEL_SIMPLE
 #define MINT_RETURN_LOGN_IF(__cond, __retval, __fmt, ...)                                          \
     __MINT_RETURN_LOG_IF_IMPL(MINT_LEVEL_NOTIFY, (__cond), (__retval), (__fmt), ##__VA_ARGS__)
 #define MINT_RETURN_LOGF_IF(__cond, __retval, __fmt, ...)                                          \
@@ -257,7 +264,6 @@ void mint_set_level(mint_id_t id, mint_level_e level);
     __MINT_RETURN_VOID_LOG_IF_IMPL(MINT_LEVEL_DEBUG, (__cond), (__fmt), ##__VA_ARGS__)
 #define MINT_RETURN_VOID_LOGT_IF(__cond, __fmt, ...)                                               \
     __MINT_RETURN_VOID_LOG_IF_IMPL(MINT_LEVEL_TRACE, (__cond), (__fmt), ##__VA_ARGS__)
-#endif
 
 // Checks, Asserts, and Returns ------------------------------------------------
 

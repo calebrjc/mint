@@ -7,13 +7,7 @@
 
 #define ARRAYSIZE(a) (sizeof(a) / sizeof((a)[0]))
 
-void mint_hook_on_assert_failed(void)
-{
-    printf("Custom exit handler!\n");
-    exit(EXIT_FAILURE);
-}
-
-uint32_t mint_hook_get_uptime(void)
+uint32_t mint_hook_get_time(void)
 {
     struct timespec ts;
     clock_gettime(CLOCK_MONOTONIC, &ts);
