@@ -344,9 +344,7 @@ void mint_set_level(mint_id_t id, mint_level_e level)
     __MINT_UNUSED(id);
 
     mint_hook_lock();
-
     s_global_level = level;
-
     mint_hook_unlock();
 }
 
@@ -636,7 +634,9 @@ static bool __mint_should_log(mint_id_t id, mint_level_e level)
 {
     __MINT_UNUSED(id);
 
+    mint_hook_lock();
     MINT_RETURN_IF(level > s_global_level, false);
+    mint_hook_unlock();
 
     return true;
 }
@@ -985,12 +985,22 @@ static bool __mint_should_log(mint_id_t id, mint_level_e level)
     MINT_RETURN_IF(id != MINT_ID_GLOBAL && id >= MINT_LOG_ID_MAX, false);
     MINT_RETURN_IF(level < MINT_LEVEL_ALWAYS || MINT_LEVEL_TRACE < level, false);
 
+    bool ok = false;
+
+    mint_hook_lock();
+
     if (id == MINT_ID_GLOBAL)
     {
-        return level <= s_global_level;
+        ok = level <= s_global_level;
+    }
+    else
+    {
+        ok = level <= s_log_contexts[id].level;
     }
 
-    return level <= s_log_contexts[id].level;
+    mint_hook_unlock();
+
+    return ok;
 }
 #endif
 
