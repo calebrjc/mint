@@ -243,17 +243,14 @@ void __mint_log_hex_impl(
 
     for (size_t i = 0; i < size; i += 16)
     {
-        int line_size  = line_header_size + __MINT_LOG_HEX_LINE_LEN + 1;
         int render_idx = line_header_size;
-
-        MINT_RETURN_VOID_IF(line_size >= MINT_LOG_BUFFER_SIZE);
 
         memcpy(S_LOG_MESSAGE_BUFFER, line_header, line_header_size);
 
         // Line header + address ---------------------------
 
-        render_idx +=
-            snprintf(S_LOG_MESSAGE_BUFFER + render_idx, line_size - render_idx, "0x%08zX  ", i);
+        render_idx += snprintf(
+            S_LOG_MESSAGE_BUFFER + render_idx, MINT_LOG_BUFFER_SIZE - render_idx, "0x%08zX  ", i);
 
         // Hex bytes ---------------------------------------
 
@@ -263,26 +260,27 @@ void __mint_log_hex_impl(
             {
                 render_idx += snprintf(
                     S_LOG_MESSAGE_BUFFER + render_idx,
-                    line_size - render_idx,
+                    MINT_LOG_BUFFER_SIZE - render_idx,
                     "%02X ",
                     ((const uint8_t *)data)[i + j]);
             }
             else
             {
-                render_idx +=
-                    snprintf(S_LOG_MESSAGE_BUFFER + render_idx, line_size - render_idx, "   ");
+                render_idx += snprintf(
+                    S_LOG_MESSAGE_BUFFER + render_idx, MINT_LOG_BUFFER_SIZE - render_idx, "   ");
             }
 
             if (j == 7)
             {
-                render_idx +=
-                    snprintf(S_LOG_MESSAGE_BUFFER + render_idx, line_size - render_idx, " ");
+                render_idx += snprintf(
+                    S_LOG_MESSAGE_BUFFER + render_idx, MINT_LOG_BUFFER_SIZE - render_idx, " ");
             }
         }
 
         // ASCII representation ----------------------------
 
-        render_idx += snprintf(S_LOG_MESSAGE_BUFFER + render_idx, line_size - render_idx, "|");
+        render_idx +=
+            snprintf(S_LOG_MESSAGE_BUFFER + render_idx, MINT_LOG_BUFFER_SIZE - render_idx, "|");
 
         for (size_t j = 0; j < 16; j++)
         {
@@ -294,13 +292,16 @@ void __mint_log_hex_impl(
                     c = '.';
                 }
 
-                render_idx +=
-                    snprintf(S_LOG_MESSAGE_BUFFER + render_idx, line_size - render_idx, "%c", c);
+                render_idx += snprintf(
+                    S_LOG_MESSAGE_BUFFER + render_idx, MINT_LOG_BUFFER_SIZE - render_idx, "%c", c);
             }
         }
 
         render_idx += snprintf(
-            S_LOG_MESSAGE_BUFFER + render_idx, line_size - render_idx, "|\n%s", __MINT_COLOR_RESET);
+            S_LOG_MESSAGE_BUFFER + render_idx,
+            MINT_LOG_BUFFER_SIZE - render_idx,
+            "|\n%s",
+            __MINT_COLOR_RESET);
 
         mint_hook_write(S_LOG_MESSAGE_BUFFER, __MINT_MIN(render_idx, MINT_LOG_BUFFER_SIZE - 1));
     }
