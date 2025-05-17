@@ -184,7 +184,7 @@ void __mint_log_impl(
         return;
     }
 
-    log_message_size = __MINT_MIN(log_message_size, MINT_LOG_BUFFER_SIZE - 1);
+    log_message_size = __MINT_MIN(log_message_size, MINT_LOG_BUFFER_SIZE);
     mint_hook_write(S_LOG_MESSAGE_BUFFER, log_message_size);
 
     mint_hook_unlock();
@@ -429,7 +429,7 @@ void __mint_log_impl(
         return;
     }
 
-    log_message_size = __MINT_MIN(log_message_size, MINT_LOG_BUFFER_SIZE - 1);
+    log_message_size = __MINT_MIN(log_message_size, MINT_LOG_BUFFER_SIZE);
     mint_hook_write(S_LOG_MESSAGE_BUFFER, log_message_size);
 
     mint_hook_unlock();
@@ -766,7 +766,7 @@ void __mint_log_impl(
         return;
     }
 
-    log_message_size = __MINT_MIN(log_message_size, MINT_LOG_BUFFER_SIZE - 1);
+    log_message_size = __MINT_MIN(log_message_size, MINT_LOG_BUFFER_SIZE);
     mint_hook_write(S_LOG_MESSAGE_BUFFER, log_message_size);
 
     mint_hook_unlock();
