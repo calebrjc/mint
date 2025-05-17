@@ -34,7 +34,7 @@
 #define MINT_API_LEVEL_ADVANCED  2
 
 // Select the API level to use. See the descriptions above for details.
-#define MINT_API_LEVEL           MINT_API_LEVEL_ADVANCED
+#define MINT_API_LEVEL           MINT_API_LEVEL_SIMPLE
 
 // Other Configuration Parameters ----------------------------------------------
 

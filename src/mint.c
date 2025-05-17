@@ -6,12 +6,13 @@
 #include <stdio.h>
 #include <string.h>
 
-#define __MINT_MIN(__x, __y)    (((__x) < (__y)) ? (__x) : (__y))
-#define __MINT_UNUSED(x)        (void)(x)
+#define __MINT_MIN(__x, __y)               (((__x) < (__y)) ? (__x) : (__y))
+#define __MINT_UNUSED(x)                   (void)(x)
 
 // NOTE(Caleb): Hex dump format example:
 // 0x00000000  23 20 42 75 69 6c 64 20  2d 2d 2d 2d 2d 2d 2d 2d  |# Build --------|
-#define __MINT_LOG_HEX_LINE_LEN 80
+#define __MINT_LOG_HEX_LINE_LEN            80
+#define __MINT_LOG_HEX_MAX_LINE_HEADER_LEN 80
 
 #if MINT_ENABLE_TIME
 #define __MINT_TIME_FORMAT  "[%02d:%02d:%02d,%03d]"
@@ -149,7 +150,7 @@ void __mint_log_impl(
     file = __mint_basename(file);
 
 #if MINT_ENABLE_TIME
-    char time_str[__MINT_TIME_STR_LEN + 1] = {0};
+    char time_str[__MINT_TIME_STR_LEN + 1];
     __mint_format_time(mint_hook_get_time(), time_str, __MINT_TIME_STR_LEN + 1);
 
     const char *log_format_format = "%s %s:%d | %s\n";
@@ -209,7 +210,7 @@ void __mint_log_hex_impl(
     int         line_header_size   = 0;
 
 #if MINT_ENABLE_TIME
-    char time_str[__MINT_TIME_STR_LEN + 1] = {0};
+    char time_str[__MINT_TIME_STR_LEN + 1];
     __mint_format_time(mint_hook_get_time(), time_str, __MINT_TIME_STR_LEN + 1);
 
     line_header_format = (header) ? "%s %s:%d | %s | " : "%s %s:%d | ";
@@ -222,9 +223,8 @@ void __mint_log_hex_impl(
         line_header_size = snprintf(NULL, 0, line_header_format, time_str, file, line);
     }
 
-    // TODO(Caleb): Reconsider how to implement this without VLAs to have support for MSVC and C23
     MINT_RETURN_VOID_IF(line_header_size < 0);
-    char line_header[line_header_size + 1];
+    char line_header[__MINT_LOG_HEX_MAX_LINE_HEADER_LEN];
 
     if (header)
     {
@@ -246,9 +246,8 @@ void __mint_log_hex_impl(
         line_header_size = snprintf(NULL, 0, line_header_format, file, line);
     }
 
-    // TODO(Caleb): Reconsider how to implement this without VLAs to have support for MSVC and C23
     MINT_RETURN_VOID_IF(line_header_size < 0);
-    char line_header[line_header_size + 1];
+    char line_header[__MINT_LOG_HEX_MAX_LINE_HEADER_LEN];
 
     if (header)
     {
@@ -344,7 +343,11 @@ void mint_set_level(mint_id_t id, mint_level_e level)
 {
     __MINT_UNUSED(id);
 
+    mint_hook_lock();
+
     s_global_level = level;
+
+    mint_hook_unlock();
 }
 
 void __mint_log_impl(
@@ -483,9 +486,8 @@ void __mint_log_hex_impl(
             line);
     }
 
-    // TODO(Caleb): Reconsider how to implement this without VLAs to have support for MSVC and C23
     MINT_RETURN_VOID_IF(line_header_size < 0);
-    char line_header[line_header_size + 1];
+    char line_header[__MINT_LOG_HEX_MAX_LINE_HEADER_LEN];
 
     if (header)
     {
@@ -532,9 +534,8 @@ void __mint_log_hex_impl(
             NULL, 0, line_header_format, S_LEVEL_COLORS[level], S_LEVEL_STRINGS[level], file, line);
     }
 
-    // TODO(Caleb): Reconsider how to implement this without VLAs to have support for MSVC and C23
     MINT_RETURN_VOID_IF(line_header_size < 0);
-    char line_header[line_header_size + 1];
+    char line_header[__MINT_LOG_HEX_MAX_LINE_HEADER_LEN];
 
     if (header)
     {
@@ -647,13 +648,18 @@ void mint_set_level(mint_id_t id, mint_level_e level)
     MINT_RETURN_VOID_IF(id != MINT_ID_GLOBAL && id >= MINT_LOG_ID_MAX);
     MINT_RETURN_VOID_IF(level < MINT_LEVEL_ALWAYS || MINT_LEVEL_TRACE < level);
 
+    mint_hook_lock();
+
     if (id == MINT_ID_GLOBAL)
     {
         s_global_level = level;
-        return;
+        goto done;
     }
 
     s_log_contexts[id].level = level;
+
+done:
+    mint_hook_unlock();
 }
 
 void mint_init_log_contexts(const mint_log_ctx_t *contexts, size_t num_contexts)
@@ -816,9 +822,8 @@ void __mint_log_hex_impl(
             line);
     }
 
-    // TODO(Caleb): Reconsider how to implement this without VLAs to have support for MSVC and C23
     MINT_RETURN_VOID_IF(line_header_size < 0);
-    char line_header[line_header_size + 1];
+    char line_header[__MINT_LOG_HEX_MAX_LINE_HEADER_LEN];
 
     if (header)
     {
@@ -875,9 +880,8 @@ void __mint_log_hex_impl(
             line);
     }
 
-    // TODO(Caleb): Reconsider how to implement this without VLAs to have support for MSVC and C23
     MINT_RETURN_VOID_IF(line_header_size < 0);
-    char line_header[line_header_size + 1];
+    char line_header[__MINT_LOG_HEX_MAX_LINE_HEADER_LEN];
 
     if (header)
     {

@@ -7,8 +7,8 @@ source_group(TREE "${CMAKE_CURRENT_SOURCE_DIR}" FILES barebones.c simple.c advan
 # add_executable(mintex_barebones barebones.c)
 # target_link_libraries(mintex_barebones mint)
 
-# add_executable(mintex_simple simple.c)
-# target_link_libraries(mintex_simple mint)
+add_executable(mintex_simple simple.c)
+target_link_libraries(mintex_simple mint)
 
-add_executable(mintex_advanced advanced.c)
-target_link_libraries(mintex_advanced mint)
+# # add_executable(mintex_advanced advanced.c)
+# target_link_libraries(mintex_advanced mint)
