@@ -137,35 +137,105 @@ void mint_init_log_contexts(const mint_log_ctx_t *contexts, size_t num_contexts)
     } while (0)
 
 #if MINT_API_LEVEL != MINT_API_LEVEL_ADVANCED
+/// @brief Log a formatted message at the "always" level.
+/// @param[in] __fmt The printf-style format string for the message.
+/// @param[in] ... The arguments for the format string.
 #define MINT_LOG(__fmt, ...)                                                                       \
     __MINT_LOG_IMPL(MINT_ID_GLOBAL, MINT_LEVEL_ALWAYS, (__fmt), ##__VA_ARGS__)
+
+/// @brief Log a formatted message at the "notify" level.
+/// @param[in] __fmt The printf-style format string for the message.
+/// @param[in] ... The arguments for the format string.
 #define MINT_LOGN(__fmt, ...)                                                                      \
     __MINT_LOG_IMPL(MINT_ID_GLOBAL, MINT_LEVEL_NOTIFY, (__fmt), ##__VA_ARGS__)
+
+/// @brief Log a formatted message at the "fatal" level.
+/// @param[in] __fmt The printf-style format string for the message.
+/// @param[in] ... The arguments for the format string.
 #define MINT_LOGF(__fmt, ...)                                                                      \
     __MINT_LOG_IMPL(MINT_ID_GLOBAL, MINT_LEVEL_FATAL, (__fmt), ##__VA_ARGS__)
+
+/// @brief Log a formatted message at the "error" level.
+/// @param[in] __fmt The printf-style format string for the message.
+/// @param[in] ... The arguments for the format string.
 #define MINT_LOGE(__fmt, ...)                                                                      \
     __MINT_LOG_IMPL(MINT_ID_GLOBAL, MINT_LEVEL_ERROR, (__fmt), ##__VA_ARGS__)
+
+/// @brief Log a formatted message at the "warn" level.
+/// @param[in] __fmt The printf-style format string for the message.
+/// @param[in] ... The arguments for the format string.
 #define MINT_LOGW(__fmt, ...)                                                                      \
     __MINT_LOG_IMPL(MINT_ID_GLOBAL, MINT_LEVEL_WARN, (__fmt), ##__VA_ARGS__)
+
+/// @brief Log a formatted message at the "info" level.
+/// @param[in] __fmt The printf-style format string for the message.
+/// @param[in] ... The arguments for the format string.
 #define MINT_LOGI(__fmt, ...)                                                                      \
     __MINT_LOG_IMPL(MINT_ID_GLOBAL, MINT_LEVEL_INFO, (__fmt), ##__VA_ARGS__)
+
+/// @brief Log a formatted message at the "debug" level.
+/// @param[in] __fmt The printf-style format string for the message.
+/// @param[in] ... The arguments for the format string.
 #define MINT_LOGD(__fmt, ...)                                                                      \
     __MINT_LOG_IMPL(MINT_ID_GLOBAL, MINT_LEVEL_DEBUG, (__fmt), ##__VA_ARGS__)
+
+/// @brief Log a formatted message at the "trace" level.
+/// @param[in] __fmt The printf-style format string for the message.
+/// @param[in] ... The arguments for the format string.
 #define MINT_LOGT(__fmt, ...)                                                                      \
     __MINT_LOG_IMPL(MINT_ID_GLOBAL, MINT_LEVEL_TRACE, (__fmt), ##__VA_ARGS__)
 #else
+/// @brief Log a formatted message at the "always" level for a specific logging ID.
+/// @param[in] __id The logging ID to use.
+/// @param[in] __fmt The printf-style format string for the message.
+/// @param[in] ... The arguments for the format string.
 #define MINT_LOG(__id, __fmt, ...)                                                                 \
     __MINT_LOG_IMPL((__id), MINT_LEVEL_ALWAYS, (__fmt), ##__VA_ARGS__)
+
+/// @brief Log a formatted message at the "notify" level for a specific logging ID.
+/// @param[in] __id The logging ID to use.
+/// @param[in] __fmt The printf-style format string for the message.
+/// @param[in] ... The arguments for the format string.
 #define MINT_LOGN(__id, __fmt, ...)                                                                \
     __MINT_LOG_IMPL((__id), MINT_LEVEL_NOTIFY, (__fmt), ##__VA_ARGS__)
+
+/// @brief Log a formatted message at the "fatal" level for a specific logging ID.
+/// @param[in] __id The logging ID to use.
+/// @param[in] __fmt The printf-style format string for the message.
+/// @param[in] ... The arguments for the format string.
 #define MINT_LOGF(__id, __fmt, ...)                                                                \
     __MINT_LOG_IMPL((__id), MINT_LEVEL_FATAL, (__fmt), ##__VA_ARGS__)
+
+/// @brief Log a formatted message at the "error" level for a specific logging ID.
+/// @param[in] __id The logging ID to use.
+/// @param[in] __fmt The printf-style format string for the message.
+/// @param[in] ... The arguments for the format string.
 #define MINT_LOGE(__id, __fmt, ...)                                                                \
     __MINT_LOG_IMPL((__id), MINT_LEVEL_ERROR, (__fmt), ##__VA_ARGS__)
+
+/// @brief Log a formatted message at the "warn" level for a specific logging ID.
+/// @param[in] __id The logging ID to use.
+/// @param[in] __fmt The printf-style format string for the message.
+/// @param[in] ... The arguments for the format string.
 #define MINT_LOGW(__id, __fmt, ...) __MINT_LOG_IMPL((__id), MINT_LEVEL_WARN, (__fmt), ##__VA_ARGS__)
+
+/// @brief Log a formatted message at the "info" level for a specific logging ID.
+/// @param[in] __id The logging ID to use.
+/// @param[in] __fmt The printf-style format string for the message.
+/// @param[in] ... The arguments for the format string.
 #define MINT_LOGI(__id, __fmt, ...) __MINT_LOG_IMPL((__id), MINT_LEVEL_INFO, (__fmt), ##__VA_ARGS__)
+
+/// @brief Log a formatted message at the "debug" level for a specific logging ID.
+/// @param[in] __id The logging ID to use.
+/// @param[in] __fmt The printf-style format string for the message.
+/// @param[in] ... The arguments for the format string.
 #define MINT_LOGD(__id, __fmt, ...)                                                                \
     __MINT_LOG_IMPL((__id), MINT_LEVEL_DEBUG, (__fmt), ##__VA_ARGS__)
+
+/// @brief Log a formatted message at the "trace" level for a specific logging ID.
+/// @param[in] __id The logging ID to use.
+/// @param[in] __fmt The printf-style format string for the message.
+/// @param[in] ... The arguments for the format string.
 #define MINT_LOGT(__id, __fmt, ...)                                                                \
     __MINT_LOG_IMPL((__id), MINT_LEVEL_TRACE, (__fmt), ##__VA_ARGS__)
 #endif
@@ -182,37 +252,123 @@ void mint_init_log_contexts(const mint_log_ctx_t *contexts, size_t num_contexts)
     } while (0)
 
 #if MINT_API_LEVEL != MINT_API_LEVEL_ADVANCED
+/// @brief Conditionally log a formatted message at the "always" level.
+/// @param[in] __cond The condition to check.
+/// @param[in] __fmt The printf-style format string for the message.
+/// @param[in] ... The arguments for the format string.
 #define MINT_LOG_IF(__cond, __fmt, ...)                                                            \
     __MINT_LOG_IF_IMPL(MINT_ID_GLOBAL, MINT_LEVEL_ALWAYS, (__cond), (__fmt), ##__VA_ARGS__)
+
+/// @brief Conditionally log a formatted message at the "notify" level.
+/// @param[in] __cond The condition to check.
+/// @param[in] __fmt The printf-style format string for the message.
+/// @param[in] ... The arguments for the format string.
 #define MINT_LOGN_IF(__cond, __fmt, ...)                                                           \
     __MINT_LOG_IF_IMPL(MINT_ID_GLOBAL, MINT_LEVEL_NOTIFY, (__cond), (__fmt), ##__VA_ARGS__)
+
+/// @brief Conditionally log a formatted message at the "fatal" level.
+/// @param[in] __cond The condition to check.
+/// @param[in] __fmt The printf-style format string for the message.
+/// @param[in] ... The arguments for the format string.
 #define MINT_LOGF_IF(__cond, __fmt, ...)                                                           \
     __MINT_LOG_IF_IMPL(MINT_ID_GLOBAL, MINT_LEVEL_FATAL, (__cond), (__fmt), ##__VA_ARGS__)
+
+/// @brief Conditionally log a formatted message at the "error" level.
+/// @param[in] __cond The condition to check.
+/// @param[in] __fmt The printf-style format string for the message.
+/// @param[in] ... The arguments for the format string.
 #define MINT_LOGE_IF(__cond, __fmt, ...)                                                           \
     __MINT_LOG_IF_IMPL(MINT_ID_GLOBAL, MINT_LEVEL_ERROR, (__cond), (__fmt), ##__VA_ARGS__)
+
+/// @brief Conditionally log a formatted message at the "warn" level.
+/// @param[in] __cond The condition to check.
+/// @param[in] __fmt The printf-style format string for the message.
+/// @param[in] ... The arguments for the format string.
 #define MINT_LOGW_IF(__cond, __fmt, ...)                                                           \
     __MINT_LOG_IF_IMPL(MINT_ID_GLOBAL, MINT_LEVEL_WARN, (__cond), (__fmt), ##__VA_ARGS__)
+
+/// @brief Conditionally log a formatted message at the "info" level.
+/// @param[in] __cond The condition to check.
+/// @param[in] __fmt The printf-style format string for the message.
+/// @param[in] ... The arguments for the format string.
 #define MINT_LOGI_IF(__cond, __fmt, ...)                                                           \
     __MINT_LOG_IF_IMPL(MINT_ID_GLOBAL, MINT_LEVEL_INFO, (__cond), (__fmt), ##__VA_ARGS__)
+
+/// @brief Conditionally log a formatted message at the "debug" level.
+/// @param[in] __cond The condition to check.
+/// @param[in] __fmt The printf-style format string for the message.
+/// @param[in] ... The arguments for the format string.
 #define MINT_LOGD_IF(__cond, __fmt, ...)                                                           \
     __MINT_LOG_IF_IMPL(MINT_ID_GLOBAL, MINT_LEVEL_DEBUG, (__cond), (__fmt), ##__VA_ARGS__)
+
+/// @brief Conditionally log a formatted message at the "trace" level.
+/// @param[in] __cond The condition to check.
+/// @param[in] __fmt The printf-style format string for the message.
+/// @param[in] ... The arguments for the format string.
 #define MINT_LOGT_IF(__cond, __fmt, ...)                                                           \
     __MINT_LOG_IF_IMPL(MINT_ID_GLOBAL, MINT_LEVEL_TRACE, (__cond), (__fmt), ##__VA_ARGS__)
 #else
+/// @brief Conditionally log a formatted message at the "always" level for a specific logging ID.
+/// @param[in] __cond The condition to check.
+/// @param[in] __id The logging ID to use.
+/// @param[in] __fmt The printf-style format string for the message.
+/// @param[in] ... The arguments for the format string.
 #define MINT_LOG_IF(__cond, __id, __fmt, ...)                                                      \
     __MINT_LOG_IF_IMPL((__id), MINT_LEVEL_ALWAYS, (__cond), (__fmt), ##__VA_ARGS__)
+
+/// @brief Conditionally log a formatted message at the "notify" level for a specific logging ID.
+/// @param[in] __cond The condition to check.
+/// @param[in] __id The logging ID to use.
+/// @param[in] __fmt The printf-style format string for the message.
+/// @param[in] ... The arguments for the format string.
 #define MINT_LOGN_IF(__cond, __id, __fmt, ...)                                                     \
     __MINT_LOG_IF_IMPL((__id), MINT_LEVEL_NOTIFY, (__cond), (__fmt), ##__VA_ARGS__)
+
+/// @brief Conditionally log a formatted message at the "fatal" level for a specific logging ID.
+/// @param[in] __cond The condition to check.
+/// @param[in] __id The logging ID to use.
+/// @param[in] __fmt The printf-style format string for the message.
+/// @param[in] ... The arguments for the format string.
 #define MINT_LOGF_IF(__cond, __id, __fmt, ...)                                                     \
     __MINT_LOG_IF_IMPL((__id), MINT_LEVEL_FATAL, (__cond), (__fmt), ##__VA_ARGS__)
+
+/// @brief Conditionally log a formatted message at the "error" level for a specific logging ID.
+/// @param[in] __cond The condition to check.
+/// @param[in] __id The logging ID to use.
+/// @param[in] __fmt The printf-style format string for the message.
+/// @param[in] ... The arguments for the format string.
 #define MINT_LOGE_IF(__cond, __id, __fmt, ...)                                                     \
     __MINT_LOG_IF_IMPL((__id), MINT_LEVEL_ERROR, (__cond), (__fmt), ##__VA_ARGS__)
+
+/// @brief Conditionally log a formatted message at the "warn" level for a specific logging ID.
+/// @param[in] __cond The condition to check.
+/// @param[in] __id The logging ID to use.
+/// @param[in] __fmt The printf-style format string for the message.
+/// @param[in] ... The arguments for the format string.
 #define MINT_LOGW_IF(__cond, __id, __fmt, ...)                                                     \
     __MINT_LOG_IF_IMPL((__id), MINT_LEVEL_WARN, (__cond), (__fmt), ##__VA_ARGS__)
+
+/// @brief Conditionally log a formatted message at the "info" level for a specific logging ID.
+/// @param[in] __cond The condition to check.
+/// @param[in] __id The logging ID to use.
+/// @param[in] __fmt The printf-style format string for the message.
+/// @param[in] ... The arguments for the format string.
 #define MINT_LOGI_IF(__cond, __id, __fmt, ...)                                                     \
     __MINT_LOG_IF_IMPL((__id), MINT_LEVEL_INFO, (__cond), (__fmt), ##__VA_ARGS__)
+
+/// @brief Conditionally log a formatted message at the "debug" level for a specific logging ID.
+/// @param[in] __cond The condition to check.
+/// @param[in] __id The logging ID to use.
+/// @param[in] __fmt The printf-style format string for the message.
+/// @param[in] ... The arguments for the format string.
 #define MINT_LOGD_IF(__cond, __id, __fmt, ...)                                                     \
     __MINT_LOG_IF_IMPL((__id), MINT_LEVEL_DEBUG, (__cond), (__fmt), ##__VA_ARGS__)
+
+/// @brief Conditionally log a formatted message at the "trace" level for a specific logging ID.
+/// @param[in] __cond The condition to check.
+/// @param[in] __id The logging ID to use.
+/// @param[in] __fmt The printf-style format string for the message.
+/// @param[in] ... The arguments for the format string.
 #define MINT_LOGT_IF(__cond, __id, __fmt, ...)                                                     \
     __MINT_LOG_IF_IMPL((__id), MINT_LEVEL_TRACE, (__cond), (__fmt), ##__VA_ARGS__)
 #endif
@@ -223,37 +379,123 @@ void mint_init_log_contexts(const mint_log_ctx_t *contexts, size_t num_contexts)
     __mint_log_hex_impl((__id), (__level), (__FILE__), (__LINE__), (__header), (__data), (__size));
 
 #if MINT_API_LEVEL != MINT_API_LEVEL_ADVANCED
+/// @brief Log a hex dump at the "always" level.
+/// @param[in] __header The header to print before the hex dump.
+/// @param[in] __data The data to dump.
+/// @param[in] __size The number of bytes to dump.
 #define MINT_LOG_HEX(__header, __data, __size)                                                     \
     __MINT_LOG_HEX_IMPL(MINT_ID_GLOBAL, MINT_LEVEL_ALWAYS, (__header), (__data), (__size))
+
+/// @brief Log a hex dump at the "notify" level.
+/// @param[in] __header The header to print before the hex dump.
+/// @param[in] __data The data to dump.
+/// @param[in] __size The number of bytes to dump.
 #define MINT_LOGN_HEX(__header, __data, __size)                                                    \
     __MINT_LOG_HEX_IMPL(MINT_ID_GLOBAL, MINT_LEVEL_NOTIFY, (__header), (__data), (__size))
+
+/// @brief Log a hex dump at the "fatal" level.
+/// @param[in] __header The header to print before the hex dump.
+/// @param[in] __data The data to dump.
+/// @param[in] __size The number of bytes to dump.
 #define MINT_LOGF_HEX(__header, __data, __size)                                                    \
     __MINT_LOG_HEX_IMPL(MINT_ID_GLOBAL, MINT_LEVEL_FATAL, (__header), (__data), (__size))
+
+/// @brief Log a hex dump at the "error" level.
+/// @param[in] __header The header to print before the hex dump.
+/// @param[in] __data The data to dump.
+/// @param[in] __size The number of bytes to dump.
 #define MINT_LOGE_HEX(__header, __data, __size)                                                    \
     __MINT_LOG_HEX_IMPL(MINT_ID_GLOBAL, MINT_LEVEL_ERROR, (__header), (__data), (__size))
+
+/// @brief Log a hex dump at the "warn" level.
+/// @param[in] __header The header to print before the hex dump.
+/// @param[in] __data The data to dump.
+/// @param[in] __size The number of bytes to dump.
 #define MINT_LOGW_HEX(__header, __data, __size)                                                    \
     __MINT_LOG_HEX_IMPL(MINT_ID_GLOBAL, MINT_LEVEL_WARN, (__header), (__data), (__size))
+
+/// @brief Log a hex dump at the "info" level.
+/// @param[in] __header The header to print before the hex dump.
+/// @param[in] __data The data to dump.
+/// @param[in] __size The number of bytes to dump.
 #define MINT_LOGI_HEX(__header, __data, __size)                                                    \
     __MINT_LOG_HEX_IMPL(MINT_ID_GLOBAL, MINT_LEVEL_INFO, (__header), (__data), (__size))
+
+/// @brief Log a hex dump at the "debug" level.
+/// @param[in] __header The header to print before the hex dump.
+/// @param[in] __data The data to dump.
+/// @param[in] __size The number of bytes to dump.
 #define MINT_LOGD_HEX(__header, __data, __size)                                                    \
     __MINT_LOG_HEX_IMPL(MINT_ID_GLOBAL, MINT_LEVEL_DEBUG, (__header), (__data), (__size))
+
+/// @brief Log a hex dump at the "trace" level.
+/// @param[in] __header The header to print before the hex dump.
+/// @param[in] __data The data to dump.
+/// @param[in] __size The number of bytes to dump.
 #define MINT_LOGT_HEX(__header, __data, __size)                                                    \
     __MINT_LOG_HEX_IMPL(MINT_ID_GLOBAL, MINT_LEVEL_TRACE, (__header), (__data), (__size))
 #else
+/// @brief Log a hex dump at the "always" level for a specific logging ID.
+/// @param[in] __id The logging ID to use.
+/// @param[in] __header The header to print before the hex dump.
+/// @param[in] __data The data to dump.
+/// @param[in] __size The number of bytes to dump.
 #define MINT_LOG_HEX(__id, __header, __data, __size)                                               \
     __MINT_LOG_HEX_IMPL((__id), MINT_LEVEL_ALWAYS, (__header), (__data), (__size))
+
+/// @brief Log a hex dump at the "notify" level for a specific logging ID.
+/// @param[in] __id The logging ID to use.
+/// @param[in] __header The header to print before the hex dump.
+/// @param[in] __data The data to dump.
+/// @param[in] __size The number of bytes to dump.
 #define MINT_LOGN_HEX(__id, __header, __data, __size)                                              \
     __MINT_LOG_HEX_IMPL((__id), MINT_LEVEL_NOTIFY, (__header), (__data), (__size))
+
+/// @brief Log a hex dump at the "fatal" level for a specific logging ID.
+/// @param[in] __id The logging ID to use.
+/// @param[in] __header The header to print before the hex dump.
+/// @param[in] __data The data to dump.
+/// @param[in] __size The number of bytes to dump.
 #define MINT_LOGF_HEX(__id, __header, __data, __size)                                              \
     __MINT_LOG_HEX_IMPL((__id), MINT_LEVEL_FATAL, (__header), (__data), (__size))
+
+/// @brief Log a hex dump at the "error" level for a specific logging ID.
+/// @param[in] __id The logging ID to use.
+/// @param[in] __header The header to print before the hex dump.
+/// @param[in] __data The data to dump.
+/// @param[in] __size The number of bytes to dump.
 #define MINT_LOGE_HEX(__id, __header, __data, __size)                                              \
     __MINT_LOG_HEX_IMPL((__id), MINT_LEVEL_ERROR, (__header), (__data), (__size))
+
+/// @brief Log a hex dump at the "warn" level for a specific logging ID.
+/// @param[in] __id The logging ID to use.
+/// @param[in] __header The header to print before the hex dump.
+/// @param[in] __data The data to dump.
+/// @param[in] __size The number of bytes to dump.
 #define MINT_LOGW_HEX(__id, __header, __data, __size)                                              \
     __MINT_LOG_HEX_IMPL((__id), MINT_LEVEL_WARN, (__header), (__data), (__size))
+
+/// @brief Log a hex dump at the "info" level for a specific logging ID.
+/// @param[in] __id The logging ID to use.
+/// @param[in] __header The header to print before the hex dump.
+/// @param[in] __data The data to dump.
+/// @param[in] __size The number of bytes to dump.
 #define MINT_LOGI_HEX(__id, __header, __data, __size)                                              \
     __MINT_LOG_HEX_IMPL((__id), MINT_LEVEL_INFO, (__header), (__data), (__size))
+
+/// @brief Log a hex dump at the "debug" level for a specific logging ID.
+/// @param[in] __id The logging ID to use.
+/// @param[in] __header The header to print before the hex dump.
+/// @param[in] __data The data to dump.
+/// @param[in] __size The number of bytes to dump.
 #define MINT_LOGD_HEX(__id, __header, __data, __size)                                              \
     __MINT_LOG_HEX_IMPL((__id), MINT_LEVEL_DEBUG, (__header), (__data), (__size))
+
+/// @brief Log a hex dump at the "trace" level for a specific logging ID.
+/// @param[in] __id The logging ID to use.
+/// @param[in] __header The header to print before the hex dump.
+/// @param[in] __data The data to dump.
+/// @param[in] __size The number of bytes to dump.
 #define MINT_LOGT_HEX(__id, __header, __data, __size)                                              \
     __MINT_LOG_HEX_IMPL((__id), MINT_LEVEL_TRACE, (__header), (__data), (__size))
 #endif
@@ -281,93 +523,313 @@ void mint_init_log_contexts(const mint_log_ctx_t *contexts, size_t num_contexts)
     } while (0)
 
 #if MINT_API_LEVEL != MINT_API_LEVEL_ADVANCED
+/// @brief Conditionally log a formatted message at the "always" level and return a value.
+/// @param[in] __cond The condition to check.
+/// @param[in] __retval The value to return if the condition is true.
+/// @param[in] __fmt The printf-style format string for the message.
+/// @param[in] ... The arguments for the format string.
+/// @return __retval if __cond is true.
 #define MINT_RETURN_LOG_IF(__cond, __retval, __fmt, ...)                                           \
     __MINT_RETURN_LOG_IF_IMPL(                                                                     \
         MINT_ID_GLOBAL, MINT_LEVEL_ALWAYS, (__cond), (__retval), (__fmt), ##__VA_ARGS__)
+
+/// @brief Conditionally log a formatted message at the "notify" level and return a value.
+/// @param[in] __cond The condition to check.
+/// @param[in] __retval The value to return if the condition is true.
+/// @param[in] __fmt The printf-style format string for the message.
+/// @param[in] ... The arguments for the format string.
+/// @return __retval if __cond is true.
 #define MINT_RETURN_LOGN_IF(__cond, __retval, __fmt, ...)                                          \
     __MINT_RETURN_LOG_IF_IMPL(                                                                     \
         MINT_ID_GLOBAL, MINT_LEVEL_NOTIFY, (__cond), (__retval), (__fmt), ##__VA_ARGS__)
+
+/// @brief Conditionally log a formatted message at the "fatal" level and return a value.
+/// @param[in] __cond The condition to check.
+/// @param[in] __retval The value to return if the condition is true.
+/// @param[in] __fmt The printf-style format string for the message.
+/// @param[in] ... The arguments for the format string.
+/// @return __retval if __cond is true.
 #define MINT_RETURN_LOGF_IF(__cond, __retval, __fmt, ...)                                          \
     __MINT_RETURN_LOG_IF_IMPL(                                                                     \
         MINT_ID_GLOBAL, MINT_LEVEL_FATAL, (__cond), (__retval), (__fmt), ##__VA_ARGS__)
+
+/// @brief Conditionally log a formatted message at the "error" level and return a value.
+/// @param[in] __cond The condition to check.
+/// @param[in] __retval The value to return if the condition is true.
+/// @param[in] __fmt The printf-style format string for the message.
+/// @param[in] ... The arguments for the format string.
+/// @return __retval if __cond is true.
 #define MINT_RETURN_LOGE_IF(__cond, __retval, __fmt, ...)                                          \
     __MINT_RETURN_LOG_IF_IMPL(                                                                     \
         MINT_ID_GLOBAL, MINT_LEVEL_ERROR, (__cond), (__retval), (__fmt), ##__VA_ARGS__)
+
+/// @brief Conditionally log a formatted message at the "warn" level and return a value.
+/// @param[in] __cond The condition to check.
+/// @param[in] __retval The value to return if the condition is true.
+/// @param[in] __fmt The printf-style format string for the message.
+/// @param[in] ... The arguments for the format string.
+/// @return __retval if __cond is true.
 #define MINT_RETURN_LOGW_IF(__cond, __retval, __fmt, ...)                                          \
     __MINT_RETURN_LOG_IF_IMPL(                                                                     \
         MINT_ID_GLOBAL, MINT_LEVEL_WARN, (__cond), (__retval), (__fmt), ##__VA_ARGS__)
+
+/// @brief Conditionally log a formatted message at the "info" level and return a value.
+/// @param[in] __cond The condition to check.
+/// @param[in] __retval The value to return if the condition is true.
+/// @param[in] __fmt The printf-style format string for the message.
+/// @param[in] ... The arguments for the format string.
+/// @return __retval if __cond is true.
 #define MINT_RETURN_LOGI_IF(__cond, __retval, __fmt, ...)                                          \
     __MINT_RETURN_LOG_IF_IMPL(                                                                     \
         MINT_ID_GLOBAL, MINT_LEVEL_INFO, (__cond), (__retval), (__fmt), ##__VA_ARGS__)
+
+/// @brief Conditionally log a formatted message at the "debug" level and return a value.
+/// @param[in] __cond The condition to check.
+/// @param[in] __retval The value to return if the condition is true.
+/// @param[in] __fmt The printf-style format string for the message.
+/// @param[in] ... The arguments for the format string.
+/// @return __retval if __cond is true.
 #define MINT_RETURN_LOGD_IF(__cond, __retval, __fmt, ...)                                          \
     __MINT_RETURN_LOG_IF_IMPL(                                                                     \
         MINT_ID_GLOBAL, MINT_LEVEL_DEBUG, (__cond), (__retval), (__fmt), ##__VA_ARGS__)
+
+/// @brief Conditionally log a formatted message at the "trace" level and return a value.
+/// @param[in] __cond The condition to check.
+/// @param[in] __retval The value to return if the condition is true.
+/// @param[in] __fmt The printf-style format string for the message.
+/// @param[in] ... The arguments for the format string.
+/// @return __retval if __cond is true.
 #define MINT_RETURN_LOGT_IF(__cond, __retval, __fmt, ...)                                          \
     __MINT_RETURN_LOG_IF_IMPL(                                                                     \
         MINT_ID_GLOBAL, MINT_LEVEL_TRACE, (__cond), (__retval), (__fmt), ##__VA_ARGS__)
 
+/// @brief Conditionally log a formatted message at the "always" level and return void.
+/// @param[in] __cond The condition to check.
+/// @param[in] __fmt The printf-style format string for the message.
+/// @param[in] ... The arguments for the format string.
 #define MINT_RETURN_VOID_LOG_IF(__cond, __fmt, ...)                                                \
     __MINT_RETURN_VOID_LOG_IF_IMPL(                                                                \
         MINT_ID_GLOBAL, MINT_LEVEL_ALWAYS, (__cond), (__fmt), ##__VA_ARGS__)
+
+/// @brief Conditionally log a formatted message at the "notify" level and return void.
+/// @param[in] __cond The condition to check.
+/// @param[in] __fmt The printf-style format string for the message.
+/// @param[in] ... The arguments for the format string.
 #define MINT_RETURN_VOID_LOGN_IF(__cond, __fmt, ...)                                               \
     __MINT_RETURN_VOID_LOG_IF_IMPL(                                                                \
         MINT_ID_GLOBAL, MINT_LEVEL_NOTIFY, (__cond), (__fmt), ##__VA_ARGS__)
+
+/// @brief Conditionally log a formatted message at the "fatal" level and return void.
+/// @param[in] __cond The condition to check.
+/// @param[in] __fmt The printf-style format string for the message.
+/// @param[in] ... The arguments for the format string.
 #define MINT_RETURN_VOID_LOGF_IF(__cond, __fmt, ...)                                               \
     __MINT_RETURN_VOID_LOG_IF_IMPL(                                                                \
         MINT_ID_GLOBAL, MINT_LEVEL_FATAL, (__cond), (__fmt), ##__VA_ARGS__)
+
+/// @brief Conditionally log a formatted message at the "error" level and return void.
+/// @param[in] __cond The condition to check.
+/// @param[in] __fmt The printf-style format string for the message.
+/// @param[in] ... The arguments for the format string.
 #define MINT_RETURN_VOID_LOGE_IF(__cond, __fmt, ...)                                               \
     __MINT_RETURN_VOID_LOG_IF_IMPL(                                                                \
         MINT_ID_GLOBAL, MINT_LEVEL_ERROR, (__cond), (__fmt), ##__VA_ARGS__)
+
+/// @brief Conditionally log a formatted message at the "warn" level and return void.
+/// @param[in] __cond The condition to check.
+/// @param[in] __fmt The printf-style format string for the message.
+/// @param[in] ... The arguments for the format string.
 #define MINT_RETURN_VOID_LOGW_IF(__cond, __fmt, ...)                                               \
     __MINT_RETURN_VOID_LOG_IF_IMPL(                                                                \
         MINT_ID_GLOBAL, MINT_LEVEL_WARN, (__cond), (__fmt), ##__VA_ARGS__)
+
+/// @brief Conditionally log a formatted message at the "info" level and return void.
+/// @param[in] __cond The condition to check.
+/// @param[in] __fmt The printf-style format string for the message.
+/// @param[in] ... The arguments for the format string.
 #define MINT_RETURN_VOID_LOGI_IF(__cond, __fmt, ...)                                               \
     __MINT_RETURN_VOID_LOG_IF_IMPL(                                                                \
         MINT_ID_GLOBAL, MINT_LEVEL_INFO, (__cond), (__fmt), ##__VA_ARGS__)
+
+/// @brief Conditionally log a formatted message at the "debug" level and return void.
+/// @param[in] __cond The condition to check.
+/// @param[in] __fmt The printf-style format string for the message.
+/// @param[in] ... The arguments for the format string.
 #define MINT_RETURN_VOID_LOGD_IF(__cond, __fmt, ...)                                               \
     __MINT_RETURN_VOID_LOG_IF_IMPL(                                                                \
         MINT_ID_GLOBAL, MINT_LEVEL_DEBUG, (__cond), (__fmt), ##__VA_ARGS__)
+
+/// @brief Conditionally log a formatted message at the "trace" level and return void.
+/// @param[in] __cond The condition to check.
+/// @param[in] __fmt The printf-style format string for the message.
+/// @param[in] ... The arguments for the format string.
 #define MINT_RETURN_VOID_LOGT_IF(__cond, __fmt, ...)                                               \
     __MINT_RETURN_VOID_LOG_IF_IMPL(                                                                \
         MINT_ID_GLOBAL, MINT_LEVEL_TRACE, (__cond), (__fmt), ##__VA_ARGS__)
 #else
+/// @brief Conditionally log a formatted message at the "always" level for a specific logging ID and
+///        return a value.
+/// @param[in] __cond The condition to check.
+/// @param[in] __retval The value to return if the condition is true.
+/// @param[in] __id The logging ID to use.
+/// @param[in] __fmt The printf-style format string for the message.
+/// @param[in] ... The arguments for the format string.
+/// @return __retval if __cond is true.
 #define MINT_RETURN_LOG_IF(__cond, __retval, __id, __fmt, ...)                                     \
     __MINT_RETURN_LOG_IF_IMPL(                                                                     \
         (__id), MINT_LEVEL_ALWAYS, (__cond), (__retval), (__fmt), ##__VA_ARGS__)
+
+/// @brief Conditionally log a formatted message at the "notify" level for a specific logging ID and
+///        return a value.
+/// @param[in] __cond The condition to check.
+/// @param[in] __retval The value to return if the condition is true.
+/// @param[in] __id The logging ID to use.
+/// @param[in] __fmt The printf-style format string for the message.
+/// @param[in] ... The arguments for the format string.
+/// @return __retval if __cond is true.
 #define MINT_RETURN_LOGN_IF(__cond, __retval, __id, __fmt, ...)                                    \
     __MINT_RETURN_LOG_IF_IMPL(                                                                     \
         (__id), MINT_LEVEL_NOTIFY, (__cond), (__retval), (__fmt), ##__VA_ARGS__)
+
+/// @brief Conditionally log a formatted message at the "fatal" level for a specific logging ID and
+///        return a value.
+/// @param[in] __cond The condition to check.
+/// @param[in] __retval The value to return if the condition is true.
+/// @param[in] __id The logging ID to use.
+/// @param[in] __fmt The printf-style format string for the message.
+/// @param[in] ... The arguments for the format string.
+/// @return __retval if __cond is true.
 #define MINT_RETURN_LOGF_IF(__cond, __retval, __id, __fmt, ...)                                    \
     __MINT_RETURN_LOG_IF_IMPL(                                                                     \
         (__id), MINT_LEVEL_FATAL, (__cond), (__retval), (__fmt), ##__VA_ARGS__)
+
+/// @brief Conditionally log a formatted message at the "error" level for a specific logging ID and
+///        return a value.
+/// @param[in] __cond The condition to check.
+/// @param[in] __retval The value to return if the condition is true.
+/// @param[in] __id The logging ID to use.
+/// @param[in] __fmt The printf-style format string for the message.
+/// @param[in] ... The arguments for the format string.
+/// @return __retval if __cond is true.
 #define MINT_RETURN_LOGE_IF(__cond, __retval, __id, __fmt, ...)                                    \
     __MINT_RETURN_LOG_IF_IMPL(                                                                     \
         (__id), MINT_LEVEL_ERROR, (__cond), (__retval), (__fmt), ##__VA_ARGS__)
+
+/// @brief Conditionally log a formatted message at the "warn" level for a specific logging ID and
+///        return a value.
+/// @param[in] __cond The condition to check.
+/// @param[in] __retval The value to return if the condition is true.
+/// @param[in] __id The logging ID to use.
+/// @param[in] __fmt The printf-style format string for the message.
+/// @param[in] ... The arguments for the format string.
+/// @return __retval if __cond is true.
 #define MINT_RETURN_LOGW_IF(__cond, __retval, __id, __fmt, ...)                                    \
     __MINT_RETURN_LOG_IF_IMPL((__id), MINT_LEVEL_WARN, (__cond), (__retval), (__fmt), ##__VA_ARGS__)
+
+/// @brief Conditionally log a formatted message at the "info" level for a specific logging ID and
+///        return a value.
+/// @param[in] __cond The condition to check.
+/// @param[in] __retval The value to return if the condition is true.
+/// @param[in] __id The logging ID to use.
+/// @param[in] __fmt The printf-style format string for the message.
+/// @param[in] ... The arguments for the format string.
+/// @return __retval if __cond is true.
 #define MINT_RETURN_LOGI_IF(__cond, __retval, __id, __fmt, ...)                                    \
     __MINT_RETURN_LOG_IF_IMPL((__id), MINT_LEVEL_INFO, (__cond), (__retval), (__fmt), ##__VA_ARGS__)
+
+/// @brief Conditionally log a formatted message at the "debug" level for a specific logging ID and
+///        return a value.
+/// @param[in] __cond The condition to check.
+/// @param[in] __retval The value to return if the condition is true.
+/// @param[in] __id The logging ID to use.
+/// @param[in] __fmt The printf-style format string for the message.
+/// @param[in] ... The arguments for the format string.
+/// @return __retval if __cond is true.
 #define MINT_RETURN_LOGD_IF(__cond, __retval, __id, __fmt, ...)                                    \
     __MINT_RETURN_LOG_IF_IMPL(                                                                     \
         (__id), MINT_LEVEL_DEBUG, (__cond), (__retval), (__fmt), ##__VA_ARGS__)
+
+/// @brief Conditionally log a formatted message at the "trace" level for a specific logging ID and
+///        return a value.
+/// @param[in] __cond The condition to check.
+/// @param[in] __retval The value to return if the condition is true.
+/// @param[in] __id The logging ID to use.
+/// @param[in] __fmt The printf-style format string for the message.
+/// @param[in] ... The arguments for the format string.
+/// @return __retval if __cond is true.
 #define MINT_RETURN_LOGT_IF(__cond, __retval, __id, __fmt, ...)                                    \
     __MINT_RETURN_LOG_IF_IMPL(                                                                     \
         (__id), MINT_LEVEL_TRACE, (__cond), (__retval), (__fmt), ##__VA_ARGS__)
 
+/// @brief Conditionally log a formatted message at the "always" level for a specific logging ID and
+///        return void.
+/// @param[in] __cond The condition to check.
+/// @param[in] __id The logging ID to use.
+/// @param[in] __fmt The printf-style format string for the message.
+/// @param[in] ... The arguments for the format string.
 #define MINT_RETURN_VOID_LOG_IF(__cond, __id, __fmt, ...)                                          \
     __MINT_RETURN_VOID_LOG_IF_IMPL((__id), MINT_LEVEL_ALWAYS, (__cond), (__fmt), ##__VA_ARGS__)
+
+/// @brief Conditionally log a formatted message at the "notify" level for a specific logging ID and
+///        return void.
+/// @param[in] __cond The condition to check.
+/// @param[in] __id The logging ID to use.
+/// @param[in] __fmt The printf-style format string for the message.
+/// @param[in] ... The arguments for the format string.
 #define MINT_RETURN_VOID_LOGN_IF(__cond, __id, __fmt, ...)                                         \
     __MINT_RETURN_VOID_LOG_IF_IMPL((__id), MINT_LEVEL_NOTIFY, (__cond), (__fmt), ##__VA_ARGS__)
+
+/// @brief Conditionally log a formatted message at the "fatal" level for a specific logging ID and
+///        return void.
+/// @param[in] __cond The condition to check.
+/// @param[in] __id The logging ID to use.
+/// @param[in] __fmt The printf-style format string for the message.
+/// @param[in] ... The arguments for the format string.
 #define MINT_RETURN_VOID_LOGF_IF(__cond, __id, __fmt, ...)                                         \
     __MINT_RETURN_VOID_LOG_IF_IMPL((__id), MINT_LEVEL_FATAL, (__cond), (__fmt), ##__VA_ARGS__)
+
+/// @brief Conditionally log a formatted message at the "error" level for a specific logging ID and
+///        return void.
+/// @param[in] __cond The condition to check.
+/// @param[in] __id The logging ID to use.
+/// @param[in] __fmt The printf-style format string for the message.
+/// @param[in] ... The arguments for the format string.
 #define MINT_RETURN_VOID_LOGE_IF(__cond, __id, __fmt, ...)                                         \
     __MINT_RETURN_VOID_LOG_IF_IMPL((__id), MINT_LEVEL_ERROR, (__cond), (__fmt), ##__VA_ARGS__)
+
+/// @brief Conditionally log a formatted message at the "warn" level for a specific logging ID and
+///        return void.
+/// @param[in] __cond The condition to check.
+/// @param[in] __id The logging ID to use.
+/// @param[in] __fmt The printf-style format string for the message.
+/// @param[in] ... The arguments for the format string.
 #define MINT_RETURN_VOID_LOGW_IF(__cond, __id, __fmt, ...)                                         \
     __MINT_RETURN_VOID_LOG_IF_IMPL((__id), MINT_LEVEL_WARN, (__cond), (__fmt), ##__VA_ARGS__)
+
+/// @brief Conditionally log a formatted message at the "info" level for a specific logging ID and
+///        return void.
+/// @param[in] __cond The condition to check.
+/// @param[in] __id The logging ID to use.
+/// @param[in] __fmt The printf-style format string for the message.
+/// @param[in] ... The arguments for the format string.
 #define MINT_RETURN_VOID_LOGI_IF(__cond, __id, __fmt, ...)                                         \
     __MINT_RETURN_VOID_LOG_IF_IMPL((__id), MINT_LEVEL_INFO, (__cond), (__fmt), ##__VA_ARGS__)
+
+/// @brief Conditionally log a formatted message at the "debug" level for a specific logging ID and
+///        return void.
+/// @param[in] __cond The condition to check.
+/// @param[in] __id The logging ID to use.
+/// @param[in] __fmt The printf-style format string for the message.
+/// @param[in] ... The arguments for the format string.
 #define MINT_RETURN_VOID_LOGD_IF(__cond, __id, __fmt, ...)                                         \
     __MINT_RETURN_VOID_LOG_IF_IMPL((__id), MINT_LEVEL_DEBUG, (__cond), (__fmt), ##__VA_ARGS__)
+
+/// @brief Conditionally log a formatted message at the "trace" level for a specific logging ID and
+///        return void.
+/// @param[in] __cond The condition to check.
+/// @param[in] __id The logging ID to use.
+/// @param[in] __fmt The printf-style format string for the message.
+/// @param[in] ... The arguments for the format string.
 #define MINT_RETURN_VOID_LOGT_IF(__cond, __id, __fmt, ...)                                         \
     __MINT_RETURN_VOID_LOG_IF_IMPL((__id), MINT_LEVEL_TRACE, (__cond), (__fmt), ##__VA_ARGS__)
 #endif

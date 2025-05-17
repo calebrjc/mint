@@ -6,6 +6,9 @@
 #include <stdio.h>
 #include <string.h>
 
+// NOTE(Caleb): There is currently a lot of code duplication between the API level implementations.
+//              This will likely be fixed in the next iteration of this project, if there is one.
+
 #define __MINT_MIN(__x, __y)               (((__x) < (__y)) ? (__x) : (__y))
 #define __MINT_UNUSED(x)                   (void)(x)
 
