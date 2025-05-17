@@ -10,12 +10,12 @@ tasks:
   configure:
     silent: true
     cmds:
-      - cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+      - cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
 
   configure-dev:
     silent: true
     cmds:
-      - cmake -S . -B build-dev -DCMAKE_BUILD_TYPE=Debug -DMINT_DEV=ON
+      - cmake -S . -B build-dev -DCMAKE_BUILD_TYPE=Debug -DMINT_DEV=ON -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
 
   build:
     silent: true

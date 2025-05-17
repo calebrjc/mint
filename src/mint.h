@@ -48,6 +48,13 @@
 /// Enable or disable colored output. Only affects MINT_API_LEVEL_SIMPLE and above.
 #define MINT_ENABLE_COLORS       1
 
+/// Enable or disable having the current system time prepended to each log message.
+/// Setting this to 1 requires the user to implement `mint_hook_get_time()` to see the time.
+#define MINT_ENABLE_TIME         1
+
+// Select the type of the time to be used. Must be an integer type.
+typedef uint32_t mint_time_t;
+
 // Hooks -------------------------------------------------------------------------------------------
 
 /// @brief Hook for writing to the console. Defaults to using `printf`.
@@ -70,15 +77,16 @@ __MINT_WEAK void mint_hook_lock(void);
 ///       MUST be implemented by the user in order to implement thread safety.
 __MINT_WEAK void mint_hook_unlock(void);
 
+/// @brief Hook for getting the current system time in milliseconds.
+__MINT_WEAK mint_time_t mint_hook_get_time(void);
+
 // Public API --------------------------------------------------------------------------------------
 
-#if MINT_API_LEVEL == MINT_API_LEVEL_ADVANCED
-#error "MINT_API_LEVEL_ADVANCED is not implemented yet"
-#endif
-
-/// @brief The type of a logging ID. Allows for at the most 32 logging IDs.
+/// @brief The type of a logging ID.
+/// @note An application may define at most 32 logging IDs.
 typedef uint32_t mint_id_t;
-#define MINT_ID_GLOBAL ((mint_id_t) - 1)
+#define MINT_LOG_ID_MAX 32
+#define MINT_ID_GLOBAL  ((mint_id_t) - 1)
 
 typedef enum
 {
@@ -92,6 +100,7 @@ typedef enum
     MINT_LEVEL_TRACE,
 } mint_level_e;
 
+#if MINT_API_LEVEL >= MINT_API_LEVEL_SIMPLE
 /// @brief Set a logging level.
 /// @param id The ID to set the level for.
 /// @param level The level to set.
@@ -99,157 +108,268 @@ typedef enum
 /// @note For MINT_API_LEVEL_SIMPLE, this function sets the global level and should use
 ///       `MINT_ID_GLOBAL` for the `id` parameter.
 void mint_set_level(mint_id_t id, mint_level_e level);
+#else
+#define mint_set_level(id, level) ((void)0)
+#endif
+
+#if MINT_API_LEVEL == MINT_API_LEVEL_ADVANCED
+#define MINT_MAX_TAG_LEN 3
+#define MINT_GLOBAL_TAG  "GLO"
+#define MINT_DEFAULT_TAG "UNK"
+
+typedef struct
+{
+    mint_level_e level;
+    char         tag[MINT_MAX_TAG_LEN + 1];
+} mint_log_ctx_t;
+
+void mint_init_log_contexts(const mint_log_ctx_t *contexts, size_t num_contexts);
+#else
+#define mint_init_log_context(...) ((void)0)
+#endif
 
 // LOG -------------------------------------------------------------------------
 
-#define __MINT_LOG_IMPL(__level, __fmt, ...)                                                       \
+#define __MINT_LOG_IMPL(__id, __level, __fmt, ...)                                                 \
     do                                                                                             \
     {                                                                                              \
-        __mint_log_impl((__level), 0, (__FILE__), (__LINE__), (__fmt), ##__VA_ARGS__);             \
+        __mint_log_impl((__id), (__level), (__FILE__), (__LINE__), (__fmt), ##__VA_ARGS__);        \
     } while (0)
 
-/// @brief Log a formatted message to the console.
-/// @param[in] __fmt The printf-style format string for the message.
-/// @param[in] ... The arguments for the format string.
-#define MINT_LOG(__fmt, ...) __MINT_LOG_IMPL(MINT_LEVEL_ALWAYS, (__fmt), ##__VA_ARGS__)
-
-#if MINT_API_LEVEL == MINT_API_LEVEL_SIMPLE
-#define MINT_LOGN(__fmt, ...) __MINT_LOG_IMPL(MINT_LEVEL_NOTIFY, (__fmt), ##__VA_ARGS__)
-#define MINT_LOGF(__fmt, ...) __MINT_LOG_IMPL(MINT_LEVEL_FATAL, (__fmt), ##__VA_ARGS__)
-#define MINT_LOGE(__fmt, ...) __MINT_LOG_IMPL(MINT_LEVEL_ERROR, (__fmt), ##__VA_ARGS__)
-#define MINT_LOGW(__fmt, ...) __MINT_LOG_IMPL(MINT_LEVEL_WARN, (__fmt), ##__VA_ARGS__)
-#define MINT_LOGI(__fmt, ...) __MINT_LOG_IMPL(MINT_LEVEL_INFO, (__fmt), ##__VA_ARGS__)
-#define MINT_LOGD(__fmt, ...) __MINT_LOG_IMPL(MINT_LEVEL_DEBUG, (__fmt), ##__VA_ARGS__)
-#define MINT_LOGT(__fmt, ...) __MINT_LOG_IMPL(MINT_LEVEL_TRACE, (__fmt), ##__VA_ARGS__)
+#if MINT_API_LEVEL != MINT_API_LEVEL_ADVANCED
+#define MINT_LOG(__fmt, ...)                                                                       \
+    __MINT_LOG_IMPL(MINT_ID_GLOBAL, MINT_LEVEL_ALWAYS, (__fmt), ##__VA_ARGS__)
+#define MINT_LOGN(__fmt, ...)                                                                      \
+    __MINT_LOG_IMPL(MINT_ID_GLOBAL, MINT_LEVEL_NOTIFY, (__fmt), ##__VA_ARGS__)
+#define MINT_LOGF(__fmt, ...)                                                                      \
+    __MINT_LOG_IMPL(MINT_ID_GLOBAL, MINT_LEVEL_FATAL, (__fmt), ##__VA_ARGS__)
+#define MINT_LOGE(__fmt, ...)                                                                      \
+    __MINT_LOG_IMPL(MINT_ID_GLOBAL, MINT_LEVEL_ERROR, (__fmt), ##__VA_ARGS__)
+#define MINT_LOGW(__fmt, ...)                                                                      \
+    __MINT_LOG_IMPL(MINT_ID_GLOBAL, MINT_LEVEL_WARN, (__fmt), ##__VA_ARGS__)
+#define MINT_LOGI(__fmt, ...)                                                                      \
+    __MINT_LOG_IMPL(MINT_ID_GLOBAL, MINT_LEVEL_INFO, (__fmt), ##__VA_ARGS__)
+#define MINT_LOGD(__fmt, ...)                                                                      \
+    __MINT_LOG_IMPL(MINT_ID_GLOBAL, MINT_LEVEL_DEBUG, (__fmt), ##__VA_ARGS__)
+#define MINT_LOGT(__fmt, ...)                                                                      \
+    __MINT_LOG_IMPL(MINT_ID_GLOBAL, MINT_LEVEL_TRACE, (__fmt), ##__VA_ARGS__)
+#else
+#define MINT_LOG(__id, __fmt, ...)                                                                 \
+    __MINT_LOG_IMPL((__id), MINT_LEVEL_ALWAYS, (__fmt), ##__VA_ARGS__)
+#define MINT_LOGN(__id, __fmt, ...)                                                                \
+    __MINT_LOG_IMPL((__id), MINT_LEVEL_NOTIFY, (__fmt), ##__VA_ARGS__)
+#define MINT_LOGF(__id, __fmt, ...)                                                                \
+    __MINT_LOG_IMPL((__id), MINT_LEVEL_FATAL, (__fmt), ##__VA_ARGS__)
+#define MINT_LOGE(__id, __fmt, ...)                                                                \
+    __MINT_LOG_IMPL((__id), MINT_LEVEL_ERROR, (__fmt), ##__VA_ARGS__)
+#define MINT_LOGW(__id, __fmt, ...) __MINT_LOG_IMPL((__id), MINT_LEVEL_WARN, (__fmt), ##__VA_ARGS__)
+#define MINT_LOGI(__id, __fmt, ...) __MINT_LOG_IMPL((__id), MINT_LEVEL_INFO, (__fmt), ##__VA_ARGS__)
+#define MINT_LOGD(__id, __fmt, ...)                                                                \
+    __MINT_LOG_IMPL((__id), MINT_LEVEL_DEBUG, (__fmt), ##__VA_ARGS__)
+#define MINT_LOGT(__id, __fmt, ...)                                                                \
+    __MINT_LOG_IMPL((__id), MINT_LEVEL_TRACE, (__fmt), ##__VA_ARGS__)
 #endif
 
 // LOG_IF ----------------------------------------------------------------------
 
-#define __MINT_LOG_IF_IMPL(__level, __cond, __fmt, ...)                                            \
+#define __MINT_LOG_IF_IMPL(__id, __level, __cond, __fmt, ...)                                      \
     do                                                                                             \
     {                                                                                              \
         if (__cond)                                                                                \
         {                                                                                          \
-            __MINT_LOG_IMPL((__level), (__fmt), ##__VA_ARGS__);                                    \
+            __MINT_LOG_IMPL((__id), (__level), (__fmt), ##__VA_ARGS__);                            \
         }                                                                                          \
     } while (0)
 
-/// @brief Conditionally log a formatted message to the console.
-/// @param[in] __cond The condition to check.
-/// @param[in] __fmt The printf-style format string for the message.
-/// @param[in] ... The arguments for the format string.
+#if MINT_API_LEVEL != MINT_API_LEVEL_ADVANCED
 #define MINT_LOG_IF(__cond, __fmt, ...)                                                            \
-    __MINT_LOG_IF_IMPL(MINT_LEVEL_ALWAYS, (__cond), (__fmt), ##__VA_ARGS__)
-
-#if MINT_API_LEVEL == MINT_API_LEVEL_SIMPLE
+    __MINT_LOG_IF_IMPL(MINT_ID_GLOBAL, MINT_LEVEL_ALWAYS, (__cond), (__fmt), ##__VA_ARGS__)
 #define MINT_LOGN_IF(__cond, __fmt, ...)                                                           \
-    __MINT_LOG_IF_IMPL(MINT_LEVEL_NOTIFY, (__cond), (__fmt), ##__VA_ARGS__)
+    __MINT_LOG_IF_IMPL(MINT_ID_GLOBAL, MINT_LEVEL_NOTIFY, (__cond), (__fmt), ##__VA_ARGS__)
 #define MINT_LOGF_IF(__cond, __fmt, ...)                                                           \
-    __MINT_LOG_IF_IMPL(MINT_LEVEL_FATAL, (__cond), (__fmt), ##__VA_ARGS__)
+    __MINT_LOG_IF_IMPL(MINT_ID_GLOBAL, MINT_LEVEL_FATAL, (__cond), (__fmt), ##__VA_ARGS__)
 #define MINT_LOGE_IF(__cond, __fmt, ...)                                                           \
-    __MINT_LOG_IF_IMPL(MINT_LEVEL_ERROR, (__cond), (__fmt), ##__VA_ARGS__)
+    __MINT_LOG_IF_IMPL(MINT_ID_GLOBAL, MINT_LEVEL_ERROR, (__cond), (__fmt), ##__VA_ARGS__)
 #define MINT_LOGW_IF(__cond, __fmt, ...)                                                           \
-    __MINT_LOG_IF_IMPL(MINT_LEVEL_WARN, (__cond), (__fmt), ##__VA_ARGS__)
+    __MINT_LOG_IF_IMPL(MINT_ID_GLOBAL, MINT_LEVEL_WARN, (__cond), (__fmt), ##__VA_ARGS__)
 #define MINT_LOGI_IF(__cond, __fmt, ...)                                                           \
-    __MINT_LOG_IF_IMPL(MINT_LEVEL_INFO, (__cond), (__fmt), ##__VA_ARGS__)
+    __MINT_LOG_IF_IMPL(MINT_ID_GLOBAL, MINT_LEVEL_INFO, (__cond), (__fmt), ##__VA_ARGS__)
 #define MINT_LOGD_IF(__cond, __fmt, ...)                                                           \
-    __MINT_LOG_IF_IMPL(MINT_LEVEL_DEBUG, (__cond), (__fmt), ##__VA_ARGS__)
+    __MINT_LOG_IF_IMPL(MINT_ID_GLOBAL, MINT_LEVEL_DEBUG, (__cond), (__fmt), ##__VA_ARGS__)
 #define MINT_LOGT_IF(__cond, __fmt, ...)                                                           \
-    __MINT_LOG_IF_IMPL(MINT_LEVEL_TRACE, (__cond), (__fmt), ##__VA_ARGS__)
+    __MINT_LOG_IF_IMPL(MINT_ID_GLOBAL, MINT_LEVEL_TRACE, (__cond), (__fmt), ##__VA_ARGS__)
+#else
+#define MINT_LOG_IF(__cond, __id, __fmt, ...)                                                      \
+    __MINT_LOG_IF_IMPL((__id), MINT_LEVEL_ALWAYS, (__cond), (__fmt), ##__VA_ARGS__)
+#define MINT_LOGN_IF(__cond, __id, __fmt, ...)                                                     \
+    __MINT_LOG_IF_IMPL((__id), MINT_LEVEL_NOTIFY, (__cond), (__fmt), ##__VA_ARGS__)
+#define MINT_LOGF_IF(__cond, __id, __fmt, ...)                                                     \
+    __MINT_LOG_IF_IMPL((__id), MINT_LEVEL_FATAL, (__cond), (__fmt), ##__VA_ARGS__)
+#define MINT_LOGE_IF(__cond, __id, __fmt, ...)                                                     \
+    __MINT_LOG_IF_IMPL((__id), MINT_LEVEL_ERROR, (__cond), (__fmt), ##__VA_ARGS__)
+#define MINT_LOGW_IF(__cond, __id, __fmt, ...)                                                     \
+    __MINT_LOG_IF_IMPL((__id), MINT_LEVEL_WARN, (__cond), (__fmt), ##__VA_ARGS__)
+#define MINT_LOGI_IF(__cond, __id, __fmt, ...)                                                     \
+    __MINT_LOG_IF_IMPL((__id), MINT_LEVEL_INFO, (__cond), (__fmt), ##__VA_ARGS__)
+#define MINT_LOGD_IF(__cond, __id, __fmt, ...)                                                     \
+    __MINT_LOG_IF_IMPL((__id), MINT_LEVEL_DEBUG, (__cond), (__fmt), ##__VA_ARGS__)
+#define MINT_LOGT_IF(__cond, __id, __fmt, ...)                                                     \
+    __MINT_LOG_IF_IMPL((__id), MINT_LEVEL_TRACE, (__cond), (__fmt), ##__VA_ARGS__)
 #endif
 
 // LOG_HEX ---------------------------------------------------------------------
 
-#define __MINT_LOG_HEX_IMPL(__level, __header, __data, __size)                                     \
-    __mint_log_hex_impl((__level), 0, (__FILE__), (__LINE__), (__header), (__data), (__size));
+#define __MINT_LOG_HEX_IMPL(__id, __level, __header, __data, __size)                               \
+    __mint_log_hex_impl((__id), (__level), (__FILE__), (__LINE__), (__header), (__data), (__size));
 
-/// @brief Log a hex dump to the console.
-/// @param[in] __header The header to print before the hex dump.
-/// @param[in] __data The data to dump.
-/// @param[in] __size The number of bytes to dump.
+#if MINT_API_LEVEL != MINT_API_LEVEL_ADVANCED
 #define MINT_LOG_HEX(__header, __data, __size)                                                     \
-    __MINT_LOG_HEX_IMPL(MINT_LEVEL_ALWAYS, (__header), (__data), (__size))
-
-#if MINT_API_LEVEL == MINT_API_LEVEL_SIMPLE
+    __MINT_LOG_HEX_IMPL(MINT_ID_GLOBAL, MINT_LEVEL_ALWAYS, (__header), (__data), (__size))
 #define MINT_LOGN_HEX(__header, __data, __size)                                                    \
-    __MINT_LOG_HEX_IMPL(MINT_LEVEL_NOTIFY, (__header), (__data), (__size))
+    __MINT_LOG_HEX_IMPL(MINT_ID_GLOBAL, MINT_LEVEL_NOTIFY, (__header), (__data), (__size))
 #define MINT_LOGF_HEX(__header, __data, __size)                                                    \
-    __MINT_LOG_HEX_IMPL(MINT_LEVEL_FATAL, (__header), (__data), (__size))
+    __MINT_LOG_HEX_IMPL(MINT_ID_GLOBAL, MINT_LEVEL_FATAL, (__header), (__data), (__size))
 #define MINT_LOGE_HEX(__header, __data, __size)                                                    \
-    __MINT_LOG_HEX_IMPL(MINT_LEVEL_ERROR, (__header), (__data), (__size))
+    __MINT_LOG_HEX_IMPL(MINT_ID_GLOBAL, MINT_LEVEL_ERROR, (__header), (__data), (__size))
 #define MINT_LOGW_HEX(__header, __data, __size)                                                    \
-    __MINT_LOG_HEX_IMPL(MINT_LEVEL_WARN, (__header), (__data), (__size))
+    __MINT_LOG_HEX_IMPL(MINT_ID_GLOBAL, MINT_LEVEL_WARN, (__header), (__data), (__size))
 #define MINT_LOGI_HEX(__header, __data, __size)                                                    \
-    __MINT_LOG_HEX_IMPL(MINT_LEVEL_INFO, (__header), (__data), (__size))
+    __MINT_LOG_HEX_IMPL(MINT_ID_GLOBAL, MINT_LEVEL_INFO, (__header), (__data), (__size))
 #define MINT_LOGD_HEX(__header, __data, __size)                                                    \
-    __MINT_LOG_HEX_IMPL(MINT_LEVEL_DEBUG, (__header), (__data), (__size))
+    __MINT_LOG_HEX_IMPL(MINT_ID_GLOBAL, MINT_LEVEL_DEBUG, (__header), (__data), (__size))
 #define MINT_LOGT_HEX(__header, __data, __size)                                                    \
-    __MINT_LOG_HEX_IMPL(MINT_LEVEL_TRACE, (__header), (__data), (__size))
+    __MINT_LOG_HEX_IMPL(MINT_ID_GLOBAL, MINT_LEVEL_TRACE, (__header), (__data), (__size))
+#else
+#define MINT_LOG_HEX(__id, __header, __data, __size)                                               \
+    __MINT_LOG_HEX_IMPL((__id), MINT_LEVEL_ALWAYS, (__header), (__data), (__size))
+#define MINT_LOGN_HEX(__id, __header, __data, __size)                                              \
+    __MINT_LOG_HEX_IMPL((__id), MINT_LEVEL_NOTIFY, (__header), (__data), (__size))
+#define MINT_LOGF_HEX(__id, __header, __data, __size)                                              \
+    __MINT_LOG_HEX_IMPL((__id), MINT_LEVEL_FATAL, (__header), (__data), (__size))
+#define MINT_LOGE_HEX(__id, __header, __data, __size)                                              \
+    __MINT_LOG_HEX_IMPL((__id), MINT_LEVEL_ERROR, (__header), (__data), (__size))
+#define MINT_LOGW_HEX(__id, __header, __data, __size)                                              \
+    __MINT_LOG_HEX_IMPL((__id), MINT_LEVEL_WARN, (__header), (__data), (__size))
+#define MINT_LOGI_HEX(__id, __header, __data, __size)                                              \
+    __MINT_LOG_HEX_IMPL((__id), MINT_LEVEL_INFO, (__header), (__data), (__size))
+#define MINT_LOGD_HEX(__id, __header, __data, __size)                                              \
+    __MINT_LOG_HEX_IMPL((__id), MINT_LEVEL_DEBUG, (__header), (__data), (__size))
+#define MINT_LOGT_HEX(__id, __header, __data, __size)                                              \
+    __MINT_LOG_HEX_IMPL((__id), MINT_LEVEL_TRACE, (__header), (__data), (__size))
 #endif
 
 // RETURN_LOG_IF --------------------------------------------------------------
 
-#define __MINT_RETURN_LOG_IF_IMPL(__level, __cond, __retval, __fmt, ...)                           \
+#define __MINT_RETURN_LOG_IF_IMPL(__id, __level, __cond, __retval, __fmt, ...)                     \
     do                                                                                             \
     {                                                                                              \
         if (__cond)                                                                                \
         {                                                                                          \
-            __MINT_LOG_IMPL((__level), (__fmt), ##__VA_ARGS__);                                    \
+            __MINT_LOG_IMPL((__id), (__level), (__fmt), ##__VA_ARGS__);                            \
             return __retval;                                                                       \
         }                                                                                          \
     } while (0)
 
-#define __MINT_RETURN_VOID_LOG_IF_IMPL(__level, __cond, __fmt, ...)                                \
+#define __MINT_RETURN_VOID_LOG_IF_IMPL(__id, __level, __cond, __fmt, ...)                          \
     do                                                                                             \
     {                                                                                              \
         if (__cond)                                                                                \
         {                                                                                          \
-            __MINT_LOG_IMPL((__level), (__fmt), ##__VA_ARGS__);                                    \
+            __MINT_LOG_IMPL((__id), (__level), (__fmt), ##__VA_ARGS__);                            \
             return;                                                                                \
         }                                                                                          \
     } while (0)
 
-/// @brief Conditionally log a formatted message to the console and return a value.
-/// @param[in] __cond The condition to check.
-/// @param[in] __retval The value to return.
-/// @param[in] __fmt The printf-style format string for the message.
-/// @param[in] ... The arguments for the format string.
+#if MINT_API_LEVEL != MINT_API_LEVEL_ADVANCED
 #define MINT_RETURN_LOG_IF(__cond, __retval, __fmt, ...)                                           \
-    __MINT_RETURN_LOG_IF_IMPL(MINT_LEVEL_ALWAYS, (__cond), (__retval), (__fmt), ##__VA_ARGS__)
+    __MINT_RETURN_LOG_IF_IMPL(                                                                     \
+        MINT_ID_GLOBAL, MINT_LEVEL_ALWAYS, (__cond), (__retval), (__fmt), ##__VA_ARGS__)
+#define MINT_RETURN_LOGN_IF(__cond, __retval, __fmt, ...)                                          \
+    __MINT_RETURN_LOG_IF_IMPL(                                                                     \
+        MINT_ID_GLOBAL, MINT_LEVEL_NOTIFY, (__cond), (__retval), (__fmt), ##__VA_ARGS__)
+#define MINT_RETURN_LOGF_IF(__cond, __retval, __fmt, ...)                                          \
+    __MINT_RETURN_LOG_IF_IMPL(                                                                     \
+        MINT_ID_GLOBAL, MINT_LEVEL_FATAL, (__cond), (__retval), (__fmt), ##__VA_ARGS__)
+#define MINT_RETURN_LOGE_IF(__cond, __retval, __fmt, ...)                                          \
+    __MINT_RETURN_LOG_IF_IMPL(                                                                     \
+        MINT_ID_GLOBAL, MINT_LEVEL_ERROR, (__cond), (__retval), (__fmt), ##__VA_ARGS__)
+#define MINT_RETURN_LOGW_IF(__cond, __retval, __fmt, ...)                                          \
+    __MINT_RETURN_LOG_IF_IMPL(                                                                     \
+        MINT_ID_GLOBAL, MINT_LEVEL_WARN, (__cond), (__retval), (__fmt), ##__VA_ARGS__)
+#define MINT_RETURN_LOGI_IF(__cond, __retval, __fmt, ...)                                          \
+    __MINT_RETURN_LOG_IF_IMPL(                                                                     \
+        MINT_ID_GLOBAL, MINT_LEVEL_INFO, (__cond), (__retval), (__fmt), ##__VA_ARGS__)
+#define MINT_RETURN_LOGD_IF(__cond, __retval, __fmt, ...)                                          \
+    __MINT_RETURN_LOG_IF_IMPL(                                                                     \
+        MINT_ID_GLOBAL, MINT_LEVEL_DEBUG, (__cond), (__retval), (__fmt), ##__VA_ARGS__)
+#define MINT_RETURN_LOGT_IF(__cond, __retval, __fmt, ...)                                          \
+    __MINT_RETURN_LOG_IF_IMPL(                                                                     \
+        MINT_ID_GLOBAL, MINT_LEVEL_TRACE, (__cond), (__retval), (__fmt), ##__VA_ARGS__)
 
 #define MINT_RETURN_VOID_LOG_IF(__cond, __fmt, ...)                                                \
-    __MINT_RETURN_VOID_LOG_IF_IMPL(MINT_LEVEL_ALWAYS, (__cond), (__fmt), ##__VA_ARGS__)
-
-#if MINT_API_LEVEL == MINT_API_LEVEL_SIMPLE
-#define MINT_RETURN_LOGN_IF(__cond, __retval, __fmt, ...)                                          \
-    __MINT_RETURN_LOG_IF_IMPL(MINT_LEVEL_NOTIFY, (__cond), (__retval), (__fmt), ##__VA_ARGS__)
-#define MINT_RETURN_LOGF_IF(__cond, __retval, __fmt, ...)                                          \
-    __MINT_RETURN_LOG_IF_IMPL(MINT_LEVEL_FATAL, (__cond), (__retval), (__fmt), ##__VA_ARGS__)
-#define MINT_RETURN_LOGE_IF(__cond, __retval, __fmt, ...)                                          \
-    __MINT_RETURN_LOG_IF_IMPL(MINT_LEVEL_ERROR, (__cond), (__retval), (__fmt), ##__VA_ARGS__)
-#define MINT_RETURN_LOGW_IF(__cond, __retval, __fmt, ...)                                          \
-    __MINT_RETURN_LOG_IF_IMPL(MINT_LEVEL_WARN, (__cond), (__retval), (__fmt), ##__VA_ARGS__)
-#define MINT_RETURN_LOGI_IF(__cond, __retval, __fmt, ...)                                          \
-    __MINT_RETURN_LOG_IF_IMPL(MINT_LEVEL_INFO, (__cond), (__retval), (__fmt), ##__VA_ARGS__)
-#define MINT_RETURN_LOGD_IF(__cond, __retval, __fmt, ...)                                          \
-    __MINT_RETURN_LOG_IF_IMPL(MINT_LEVEL_DEBUG, (__cond), (__retval), (__fmt), ##__VA_ARGS__)
-#define MINT_RETURN_LOGT_IF(__cond, __retval, __fmt, ...)                                          \
-    __MINT_RETURN_LOG_IF_IMPL(MINT_LEVEL_TRACE, (__cond), (__retval), (__fmt), ##__VA_ARGS__)
-
+    __MINT_RETURN_VOID_LOG_IF_IMPL(                                                                \
+        MINT_ID_GLOBAL, MINT_LEVEL_ALWAYS, (__cond), (__fmt), ##__VA_ARGS__)
 #define MINT_RETURN_VOID_LOGN_IF(__cond, __fmt, ...)                                               \
-    __MINT_RETURN_VOID_LOG_IF_IMPL(MINT_LEVEL_NOTIFY, (__cond), (__fmt), ##__VA_ARGS__)
+    __MINT_RETURN_VOID_LOG_IF_IMPL(                                                                \
+        MINT_ID_GLOBAL, MINT_LEVEL_NOTIFY, (__cond), (__fmt), ##__VA_ARGS__)
 #define MINT_RETURN_VOID_LOGF_IF(__cond, __fmt, ...)                                               \
-    __MINT_RETURN_VOID_LOG_IF_IMPL(MINT_LEVEL_FATAL, (__cond), (__fmt), ##__VA_ARGS__)
+    __MINT_RETURN_VOID_LOG_IF_IMPL(                                                                \
+        MINT_ID_GLOBAL, MINT_LEVEL_FATAL, (__cond), (__fmt), ##__VA_ARGS__)
 #define MINT_RETURN_VOID_LOGE_IF(__cond, __fmt, ...)                                               \
-    __MINT_RETURN_VOID_LOG_IF_IMPL(MINT_LEVEL_ERROR, (__cond), (__fmt), ##__VA_ARGS__)
+    __MINT_RETURN_VOID_LOG_IF_IMPL(                                                                \
+        MINT_ID_GLOBAL, MINT_LEVEL_ERROR, (__cond), (__fmt), ##__VA_ARGS__)
 #define MINT_RETURN_VOID_LOGW_IF(__cond, __fmt, ...)                                               \
-    __MINT_RETURN_VOID_LOG_IF_IMPL(MINT_LEVEL_WARN, (__cond), (__fmt), ##__VA_ARGS__)
+    __MINT_RETURN_VOID_LOG_IF_IMPL(                                                                \
+        MINT_ID_GLOBAL, MINT_LEVEL_WARN, (__cond), (__fmt), ##__VA_ARGS__)
 #define MINT_RETURN_VOID_LOGI_IF(__cond, __fmt, ...)                                               \
-    __MINT_RETURN_VOID_LOG_IF_IMPL(MINT_LEVEL_INFO, (__cond), (__fmt), ##__VA_ARGS__)
+    __MINT_RETURN_VOID_LOG_IF_IMPL(                                                                \
+        MINT_ID_GLOBAL, MINT_LEVEL_INFO, (__cond), (__fmt), ##__VA_ARGS__)
 #define MINT_RETURN_VOID_LOGD_IF(__cond, __fmt, ...)                                               \
-    __MINT_RETURN_VOID_LOG_IF_IMPL(MINT_LEVEL_DEBUG, (__cond), (__fmt), ##__VA_ARGS__)
+    __MINT_RETURN_VOID_LOG_IF_IMPL(                                                                \
+        MINT_ID_GLOBAL, MINT_LEVEL_DEBUG, (__cond), (__fmt), ##__VA_ARGS__)
 #define MINT_RETURN_VOID_LOGT_IF(__cond, __fmt, ...)                                               \
-    __MINT_RETURN_VOID_LOG_IF_IMPL(MINT_LEVEL_TRACE, (__cond), (__fmt), ##__VA_ARGS__)
+    __MINT_RETURN_VOID_LOG_IF_IMPL(                                                                \
+        MINT_ID_GLOBAL, MINT_LEVEL_TRACE, (__cond), (__fmt), ##__VA_ARGS__)
+#else
+#define MINT_RETURN_LOG_IF(__cond, __retval, __id, __fmt, ...)                                     \
+    __MINT_RETURN_LOG_IF_IMPL(                                                                     \
+        (__id), MINT_LEVEL_ALWAYS, (__cond), (__retval), (__fmt), ##__VA_ARGS__)
+#define MINT_RETURN_LOGN_IF(__cond, __retval, __id, __fmt, ...)                                    \
+    __MINT_RETURN_LOG_IF_IMPL(                                                                     \
+        (__id), MINT_LEVEL_NOTIFY, (__cond), (__retval), (__fmt), ##__VA_ARGS__)
+#define MINT_RETURN_LOGF_IF(__cond, __retval, __id, __fmt, ...)                                    \
+    __MINT_RETURN_LOG_IF_IMPL(                                                                     \
+        (__id), MINT_LEVEL_FATAL, (__cond), (__retval), (__fmt), ##__VA_ARGS__)
+#define MINT_RETURN_LOGE_IF(__cond, __retval, __id, __fmt, ...)                                    \
+    __MINT_RETURN_LOG_IF_IMPL(                                                                     \
+        (__id), MINT_LEVEL_ERROR, (__cond), (__retval), (__fmt), ##__VA_ARGS__)
+#define MINT_RETURN_LOGW_IF(__cond, __retval, __id, __fmt, ...)                                    \
+    __MINT_RETURN_LOG_IF_IMPL((__id), MINT_LEVEL_WARN, (__cond), (__retval), (__fmt), ##__VA_ARGS__)
+#define MINT_RETURN_LOGI_IF(__cond, __retval, __id, __fmt, ...)                                    \
+    __MINT_RETURN_LOG_IF_IMPL((__id), MINT_LEVEL_INFO, (__cond), (__retval), (__fmt), ##__VA_ARGS__)
+#define MINT_RETURN_LOGD_IF(__cond, __retval, __id, __fmt, ...)                                    \
+    __MINT_RETURN_LOG_IF_IMPL(                                                                     \
+        (__id), MINT_LEVEL_DEBUG, (__cond), (__retval), (__fmt), ##__VA_ARGS__)
+#define MINT_RETURN_LOGT_IF(__cond, __retval, __id, __fmt, ...)                                    \
+    __MINT_RETURN_LOG_IF_IMPL(                                                                     \
+        (__id), MINT_LEVEL_TRACE, (__cond), (__retval), (__fmt), ##__VA_ARGS__)
+
+#define MINT_RETURN_VOID_LOG_IF(__cond, __id, __fmt, ...)                                          \
+    __MINT_RETURN_VOID_LOG_IF_IMPL((__id), MINT_LEVEL_ALWAYS, (__cond), (__fmt), ##__VA_ARGS__)
+#define MINT_RETURN_VOID_LOGN_IF(__cond, __id, __fmt, ...)                                         \
+    __MINT_RETURN_VOID_LOG_IF_IMPL((__id), MINT_LEVEL_NOTIFY, (__cond), (__fmt), ##__VA_ARGS__)
+#define MINT_RETURN_VOID_LOGF_IF(__cond, __id, __fmt, ...)                                         \
+    __MINT_RETURN_VOID_LOG_IF_IMPL((__id), MINT_LEVEL_FATAL, (__cond), (__fmt), ##__VA_ARGS__)
+#define MINT_RETURN_VOID_LOGE_IF(__cond, __id, __fmt, ...)                                         \
+    __MINT_RETURN_VOID_LOG_IF_IMPL((__id), MINT_LEVEL_ERROR, (__cond), (__fmt), ##__VA_ARGS__)
+#define MINT_RETURN_VOID_LOGW_IF(__cond, __id, __fmt, ...)                                         \
+    __MINT_RETURN_VOID_LOG_IF_IMPL((__id), MINT_LEVEL_WARN, (__cond), (__fmt), ##__VA_ARGS__)
+#define MINT_RETURN_VOID_LOGI_IF(__cond, __id, __fmt, ...)                                         \
+    __MINT_RETURN_VOID_LOG_IF_IMPL((__id), MINT_LEVEL_INFO, (__cond), (__fmt), ##__VA_ARGS__)
+#define MINT_RETURN_VOID_LOGD_IF(__cond, __id, __fmt, ...)                                         \
+    __MINT_RETURN_VOID_LOG_IF_IMPL((__id), MINT_LEVEL_DEBUG, (__cond), (__fmt), ##__VA_ARGS__)
+#define MINT_RETURN_VOID_LOGT_IF(__cond, __id, __fmt, ...)                                         \
+    __MINT_RETURN_VOID_LOG_IF_IMPL((__id), MINT_LEVEL_TRACE, (__cond), (__fmt), ##__VA_ARGS__)
 #endif
 
 // Checks, Asserts, and Returns ------------------------------------------------
@@ -264,7 +384,11 @@ void mint_set_level(mint_id_t id, mint_level_e level);
         if (!(__cond))                                                                             \
         {                                                                                          \
             __MINT_LOG_IMPL(                                                                       \
-                MINT_LEVEL_WARN, "Check failed: '%s' - "__fmt, (#__cond), ##__VA_ARGS__);          \
+                MINT_ID_GLOBAL,                                                                    \
+                MINT_LEVEL_WARN,                                                                   \
+                "Check failed: '%s' - "__fmt,                                                      \
+                (#__cond),                                                                         \
+                ##__VA_ARGS__);                                                                    \
         }                                                                                          \
     } while (0)
 
@@ -279,7 +403,11 @@ void mint_set_level(mint_id_t id, mint_level_e level);
         if (!(__cond))                                                                             \
         {                                                                                          \
             __MINT_LOG_IMPL(                                                                       \
-                MINT_LEVEL_FATAL, "Assert failed: '%s' - "__fmt, (#__cond), ##__VA_ARGS__);        \
+                MINT_ID_GLOBAL,                                                                    \
+                MINT_LEVEL_FATAL,                                                                  \
+                "Assert failed: '%s' - "__fmt,                                                     \
+                (#__cond),                                                                         \
+                ##__VA_ARGS__);                                                                    \
             mint_hook_on_assert_failed();                                                          \
         }                                                                                          \
     } while (0)
@@ -311,19 +439,19 @@ void mint_set_level(mint_id_t id, mint_level_e level);
 #define MINT_CRASH(__fmt, ...)                                                                     \
     do                                                                                             \
     {                                                                                              \
-        __MINT_LOG_IMPL(MINT_LEVEL_FATAL, "Crash forced! " __fmt, ##__VA_ARGS__);                  \
+        __MINT_LOG_IMPL(MINT_ID_GLOBAL, MINT_LEVEL_FATAL, "Crash forced! " __fmt, ##__VA_ARGS__);  \
         mint_hook_on_assert_failed();                                                              \
     } while (0)
 
 // Implementation Details --------------------------------------------------------------------------
 
 void __mint_log_impl(
-    mint_level_e level, mint_id_t id, char *file, int line, const char *format, ...)
+    mint_id_t id, mint_level_e level, char *file, int line, const char *format, ...)
     __MINT_PRINTFLIKE(5, 6);
 
 void __mint_log_hex_impl(
-    mint_level_e level,
     mint_id_t    id,
+    mint_level_e level,
     char        *file,
     int          line,
     const char  *header,
