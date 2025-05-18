@@ -15,6 +15,9 @@
 
 // API Level Selection ---------------------------------------------------------
 
+/// Enable or disable the library. If disabled, all macros and function calls will decay to no-ops.
+#define MINT_ENABLED             0
+
 /// The lowest API level with the most basic features. No levels, no IDs, no fuss. You get basic
 /// logging macros as well as all of the conditional logging macros and assertion macros.
 /// Recommended for small, single-task projects which do not need to make use of logging levels.
@@ -57,6 +60,7 @@ typedef uint32_t mint_time_t;
 
 // Hooks -------------------------------------------------------------------------------------------
 
+#if MINT_ENABLED == 1
 /// @brief Hook for writing to the console. Defaults to using `printf`.
 /// @param[in] str The string to write.
 /// @param[in] size The length of the string.
@@ -79,6 +83,13 @@ __MINT_WEAK void mint_hook_unlock(void);
 
 /// @brief Hook for getting the current system time in milliseconds.
 __MINT_WEAK mint_time_t mint_hook_get_time(void);
+#else
+#define mint_hook_write(...)            ((void)0)
+#define mint_hook_on_assert_failed(...) ((void)0)
+#define mint_hook_lock(...)             ((void)0)
+#define mint_hook_unlock(...)           ((void)0)
+#define mint_hook_get_time(...)         (0)
+#endif
 
 // Public API --------------------------------------------------------------------------------------
 
@@ -100,7 +111,7 @@ typedef enum
     MINT_LEVEL_TRACE,
 } mint_level_e;
 
-#if MINT_API_LEVEL >= MINT_API_LEVEL_SIMPLE
+#if MINT_ENABLED == 1 && MINT_API_LEVEL >= MINT_API_LEVEL_SIMPLE
 /// @brief Set a logging level.
 /// @param id The ID to set the level for.
 /// @param level The level to set.
@@ -122,7 +133,9 @@ typedef struct
     mint_level_e level;
     char         tag[MINT_MAX_TAG_LEN + 1];
 } mint_log_ctx_t;
+#endif
 
+#if MINT_ENABLED == 1 && MINT_API_LEVEL == MINT_API_LEVEL_ADVANCED
 /// @brief Set the initial state of the logging system.
 /// @param contexts An array of logging contexts used to configure the logging system.
 /// @param num_contexts The number of contexts in the array.
@@ -133,11 +146,15 @@ void mint_init_log_contexts(const mint_log_ctx_t *contexts, size_t num_contexts)
 
 // LOG -------------------------------------------------------------------------
 
+#if MINT_ENABLED == 1
 #define __MINT_LOG_IMPL(__id, __level, __fmt, ...)                                                 \
     do                                                                                             \
     {                                                                                              \
         __mint_log_impl((__id), (__level), (__FILE__), (__LINE__), (__fmt), ##__VA_ARGS__);        \
     } while (0)
+#else
+#define __MINT_LOG_IMPL(...) ((void)0)
+#endif
 
 #if MINT_API_LEVEL != MINT_API_LEVEL_ADVANCED
 /// @brief Log a formatted message at the "always" level.
@@ -245,6 +262,7 @@ void mint_init_log_contexts(const mint_log_ctx_t *contexts, size_t num_contexts)
 
 // LOG_IF ----------------------------------------------------------------------
 
+#if MINT_ENABLED == 1
 #define __MINT_LOG_IF_IMPL(__id, __level, __cond, __fmt, ...)                                      \
     do                                                                                             \
     {                                                                                              \
@@ -253,6 +271,9 @@ void mint_init_log_contexts(const mint_log_ctx_t *contexts, size_t num_contexts)
             __MINT_LOG_IMPL((__id), (__level), (__fmt), ##__VA_ARGS__);                            \
         }                                                                                          \
     } while (0)
+#else
+#define __MINT_LOG_IF_IMPL(...) ((void)0)
+#endif
 
 #if MINT_API_LEVEL != MINT_API_LEVEL_ADVANCED
 /// @brief Conditionally log a formatted message at the "always" level.
@@ -378,8 +399,12 @@ void mint_init_log_contexts(const mint_log_ctx_t *contexts, size_t num_contexts)
 
 // LOG_HEX ---------------------------------------------------------------------
 
+#if MINT_ENABLED == 1
 #define __MINT_LOG_HEX_IMPL(__id, __level, __header, __data, __size)                               \
     __mint_log_hex_impl((__id), (__level), (__FILE__), (__LINE__), (__header), (__data), (__size));
+#else
+#define __MINT_LOG_HEX_IMPL(__id, __level, __header, __data, __size) ((void)0)
+#endif
 
 #if MINT_API_LEVEL != MINT_API_LEVEL_ADVANCED
 /// @brief Log a hex dump at the "always" level.
