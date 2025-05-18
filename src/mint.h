@@ -128,7 +128,7 @@ typedef struct
 /// @param num_contexts The number of contexts in the array.
 void mint_init_log_contexts(const mint_log_ctx_t *contexts, size_t num_contexts);
 #else
-#define mint_init_log_context(...) ((void)0)
+#define mint_init_log_contexts(...) ((void)0)
 #endif
 
 // LOG -------------------------------------------------------------------------
