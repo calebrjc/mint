@@ -9,8 +9,8 @@
 #else
 #define __MINT_WEAK
 #define __MINT_PRINTFLIKE(...)
-
 #endif
+
 // Configuration -----------------------------------------------------------------------------------
 
 // API Level Selection ---------------------------------------------------------
@@ -113,9 +113,9 @@ void mint_set_level(mint_id_t id, mint_level_e level);
 #endif
 
 #if MINT_API_LEVEL == MINT_API_LEVEL_ADVANCED
-#define MINT_MAX_TAG_LEN 3
-#define MINT_GLOBAL_TAG  "GLO"
-#define MINT_DEFAULT_TAG "UNK"
+#define MINT_MAX_TAG_LEN 6
+#define MINT_GLOBAL_TAG  "GLOBAL"
+#define MINT_DEFAULT_TAG "UNKNWN"
 
 typedef struct
 {
@@ -123,9 +123,12 @@ typedef struct
     char         tag[MINT_MAX_TAG_LEN + 1];
 } mint_log_ctx_t;
 
+/// @brief Set the initial state of the logging system.
+/// @param contexts An array of logging contexts used to configure the logging system.
+/// @param num_contexts The number of contexts in the array.
 void mint_init_log_contexts(const mint_log_ctx_t *contexts, size_t num_contexts);
 #else
-#define mint_init_log_context(...) ((void)0)
+#define mint_init_log_contexts(...) ((void)0)
 #endif
 
 // LOG -------------------------------------------------------------------------
