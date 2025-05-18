@@ -58,17 +58,15 @@ that may be implemented for a specific platform to provide log output. By defaul
 (see: `void mint_hook_write(const char *str, size_t size)`)
 
 As a provider of assertion and forced crash macros, the library provides a hook function to allow the user to specify what should
-happen when the logic is forces into either state. The library will log the error, but it is up to the user to provide any other
+happen when the logic is forced into either state. The library will log the error, but it is up to the user to provide any other
 handling that they would like (system reset, saving data, etc.). (see: `void mint_hook_on_assert_failed(void)`)
 
 `mint` is not thread safe by default, but provides hooks that the user may implement in order to implement mutual exclusion. If these
 hooks are not implemented, `mint` can make no guarantees about its thread safety. (see: `void mint_hook_lock(void)` / `void mint_hook_unlock(void)`)
 
-If the uesr would like to display the current system time in front of each log message, they must not only enable the proper configuration
+If the user would like to display the current system time in front of each log message, they must not only enable the proper configuration
 option, but they will also have to implement the hook function that will return the current system time (or uptime). The type of this
 timestamp may also be changed, though it must be an integer type which is cast-able to a `uint32_t`. (see: `mint_time_t mint_hook_get_time(void)`)
-
-- `mint_hook_get_time(void)` — For timestamps (default: returns 0).
 
 ### Examples
 
