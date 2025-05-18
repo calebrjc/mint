@@ -108,6 +108,7 @@ static mint_log_ctx_t s_log_contexts[MINT_LOG_ID_MAX] = {
 
 // Default Hook Implementations --------------------------------------------------------------------
 
+#if MINT_ENABLED == 1
 __MINT_WEAK void mint_hook_write(const char *str, size_t size)
 {
     printf("%.*s", (int)size, str);
@@ -138,6 +139,7 @@ __MINT_WEAK uint32_t mint_hook_get_time(void)
 {
     return 0;
 }
+#endif
 
 // API Implementation ------------------------------------------------------------------------------
 
@@ -342,6 +344,7 @@ static bool __mint_should_log(mint_id_t id, mint_level_e level)
 #endif
 
 #if MINT_API_LEVEL == MINT_API_LEVEL_SIMPLE
+#if MINT_ENABLED == 1
 void mint_set_level(mint_id_t id, mint_level_e level)
 {
     __MINT_UNUSED(id);
@@ -350,6 +353,7 @@ void mint_set_level(mint_id_t id, mint_level_e level)
     s_global_level = level;
     mint_hook_unlock();
 }
+#endif
 
 void __mint_log_impl(
     mint_id_t id, mint_level_e level, char *file, int line, const char *format, ...)
@@ -646,6 +650,7 @@ static bool __mint_should_log(mint_id_t id, mint_level_e level)
 #endif
 
 #if MINT_API_LEVEL == MINT_API_LEVEL_ADVANCED
+#if MINT_ENABLED == 1
 void mint_set_level(mint_id_t id, mint_level_e level)
 {
     MINT_RETURN_VOID_IF(id != MINT_ID_GLOBAL && id >= MINT_LOG_ID_MAX);
@@ -664,7 +669,9 @@ void mint_set_level(mint_id_t id, mint_level_e level)
 done:
     mint_hook_unlock();
 }
+#endif
 
+#if MINT_ENABLED == 1
 void mint_init_log_contexts(const mint_log_ctx_t *contexts, size_t num_contexts)
 {
     MINT_RETURN_VOID_IF(!contexts || num_contexts == 0);
@@ -684,6 +691,7 @@ void mint_init_log_contexts(const mint_log_ctx_t *contexts, size_t num_contexts)
         dest_ctx->tag[MINT_MAX_TAG_LEN] = '\0';
     }
 }
+#endif
 
 void __mint_log_impl(
     mint_id_t id, mint_level_e level, char *file, int line, const char *format, ...)
